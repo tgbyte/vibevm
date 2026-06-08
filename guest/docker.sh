@@ -12,6 +12,9 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
+# Registry pull-through mirror (must also be in the tinyproxy allowlist). Empty = none.
+REGISTRY_MIRROR="${REGISTRY_MIRROR:-https://registry-mirror.example.com}"
+
 echo "== Installing Docker engine + compose + buildx =="
 apt-get install -y docker.io docker-compose-v2 docker-buildx \
   || apt-get install -y docker.io docker-compose-v2
@@ -27,6 +30,16 @@ Environment="HTTP_PROXY=http://127.0.0.1:8888"
 Environment="HTTPS_PROXY=http://127.0.0.1:8888"
 Environment="NO_PROXY=localhost,127.0.0.1,::1"
 EOF
+
+if [ -n "$REGISTRY_MIRROR" ]; then
+  echo "== Configuring registry mirror: $REGISTRY_MIRROR =="
+  install -d /etc/docker
+  cat >/etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": ["$REGISTRY_MIRROR"]
+}
+EOF
+fi
 
 systemctl daemon-reload
 systemctl enable docker

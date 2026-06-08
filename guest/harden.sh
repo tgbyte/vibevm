@@ -30,6 +30,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)docker\.io$
 (^|\.)docker\.com$
 (^|\.)ghcr\.io$
+^registry-mirror\.example\.com$
 ^llm-gateway\.example\.com$
 EOF
 
