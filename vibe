@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Launch Claude in auto mode (or a shell) inside the vibevm sandbox.
-#   ./vibe          -> claude --dangerously-skip-permissions in ~/workspace
-#   ./vibe shell    -> plain login shell as the unprivileged vibe user
+#   ./vibe [PROJECT]        -> claude in ~/workspace[/PROJECT]
+#   ./vibe claude [PROJECT] -> same, explicit (use if PROJECT clashes with a subcommand)
+#   ./vibe shell [PROJECT]  -> login shell in ~/workspace[/PROJECT]
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 VM=vibevm
@@ -38,18 +39,6 @@ if [ -n "${ANTHROPIC_BASE_URL:-}" ]; then
 fi
 
 case "${1:-claude}" in
-  claude)
-    exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
-      runuser -u vibe -- bash -lc 'cd ~/workspace && exec claude --dangerously-skip-permissions'
-    ;;
-  shell)
-    exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
-      runuser -u vibe -- bash -l
-    ;;
-  firewall)
-    # Toggle the egress allowlist (root inside the VM; the agent can't).
-    exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
-    ;;
   mounts)
     # Sync ~/workspace mounts to match ./workspace/* and ./workspaces.conf.
     exec "$HERE/mount-workspaces.sh"
@@ -58,8 +47,26 @@ case "${1:-claude}" in
     # Re-sync the Claude status line from the host into the VM.
     exec "$HERE/sync-statusline.sh"
     ;;
-  *)
-    echo "usage: $(basename "$0") [claude | shell | mounts | statusline | firewall <on|off|status>]" >&2
-    exit 1
+  firewall)
+    # Toggle the egress allowlist (root inside the VM; the agent can't).
+    exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
     ;;
+  -h|--help|help)
+    echo "usage: $(basename "$0") [PROJECT | claude [PROJECT] | shell [PROJECT] | mounts | statusline | firewall <on|off|status>]"
+    echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
+    exit 0
+    ;;
+  claude) runmode=claude; proj="${2:-}" ;;
+  shell)  runmode=shell;  proj="${2:-}" ;;
+  *)      runmode=claude; proj="$1" ;;    # ./vibe <PROJECT>
 esac
+
+# Start Claude (default) or a login shell in ~/workspace[/PROJECT]. The project
+# is passed as a positional arg (not interpolated) so names with spaces are safe.
+if [ "$runmode" = shell ]; then
+  exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
+    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such dir: ~/workspace/$1" >&2; exit 1; }; exec bash -l' _ "$proj"
+else
+  exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
+    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such project: ~/workspace/$1 (mounted? try ./vibe mounts)" >&2; exit 1; }; exec claude --dangerously-skip-permissions' _ "$proj"
+fi

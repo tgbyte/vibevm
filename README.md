@@ -62,7 +62,8 @@ Multiple host directories can be mounted into the VM, each appearing at
 
 Apply changes any time with `./vibe mounts`. Paths must be readable by the incus
 daemon (anywhere under your home works). `./vibe` then starts Claude in
-`~/workspace`, so it sees all mounted projects.
+`~/workspace` (it sees all mounted projects), or `./vibe <name>` to start it
+directly inside `~/workspace/<name>`.
 
 ### Git pushes
 
@@ -98,10 +99,10 @@ No firewall edits needed; it works with the allowlist on.
 ## Day-to-day
 
 ```sh
-./vibe                  # Claude in auto mode, in ~/workspace
+./vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
 ./vibe mounts           # (re)mount project dirs after editing workspaces.conf
 ./vibe statusline       # re-sync your host Claude status line into the VM
-./vibe shell            # plain shell in the VM (unprivileged vibe user)
+./vibe shell [PROJECT]  # login shell in the VM (in ~/workspace[/PROJECT])
 ./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
 
 incus snapshot restore vibevm clean   # roll back a messed-up VM
