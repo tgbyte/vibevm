@@ -21,11 +21,11 @@ until incus exec "$VM" -- true 2>/dev/null; do sleep 1; done
 
 case "${1:-claude}" in
   claude)
-    exec incus exec "$VM" --tty "${ENVFLAGS[@]}" -- \
+    exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
       runuser -u vibe -- bash -lc 'cd ~/project && exec claude --dangerously-skip-permissions'
     ;;
   shell)
-    exec incus exec "$VM" --tty "${ENVFLAGS[@]}" -- \
+    exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
       runuser -u vibe -- bash -l
     ;;
   *)

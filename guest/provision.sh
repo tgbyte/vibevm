@@ -49,6 +49,9 @@ id vibe >/dev/null 2>&1 || useradd -m -u "$HOST_UID" -g vibe -s /bin/bash vibe
 mkdir -p /home/vibe/project
 chown vibe:vibe /home/vibe/project
 
+echo "== Installing developer runtimes (chrome, nvm/node, sdkman/java) =="
+bash /usr/local/bin/devtools.sh
+
 echo "== Applying network egress policy (tinyproxy + firewall) =="
 bash /usr/local/bin/harden.sh
 

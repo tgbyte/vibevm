@@ -25,6 +25,8 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)ubuntu\.com$
 (^|\.)pypi\.org$
 (^|\.)pythonhosted\.org$
+(^|\.)sdkman\.io$
+^dl\.google\.com$
 EOF
 
 cat >/etc/tinyproxy/tinyproxy.conf <<'EOF'
