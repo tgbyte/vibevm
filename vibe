@@ -12,6 +12,15 @@ if [ -f "$HERE/secrets.env" ]; then
   [ -n "${ANTHROPIC_API_KEY:-}" ] && ENVFLAGS+=(--env "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
 fi
 
+# Carry the host git identity into the session so the agent can commit in the VM
+# (we keep no credentials in the VM — you push from the host). Nothing persisted.
+gname="$(git config user.name  2>/dev/null || true)"
+gmail="$(git config user.email 2>/dev/null || true)"
+if [ -n "$gname" ] && [ -n "$gmail" ]; then
+  ENVFLAGS+=(--env "GIT_AUTHOR_NAME=$gname"    --env "GIT_AUTHOR_EMAIL=$gmail" \
+             --env "GIT_COMMITTER_NAME=$gname" --env "GIT_COMMITTER_EMAIL=$gmail")
+fi
+
 if ! incus info "$VM" >/dev/null 2>&1; then
   echo "VM '$VM' not found. Run ./create-vm.sh first." >&2
   exit 1

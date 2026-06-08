@@ -64,6 +64,22 @@ Apply changes any time with `./vibe mounts`. Paths must be readable by the incus
 daemon (anywhere under your home works). `./vibe` then starts Claude in
 `~/workspace`, so it sees all mounted projects.
 
+### Git pushes
+
+Pushing happens **from the host**, not the VM — the VM deliberately holds no git
+credentials and SSH (port 22) is blocked by the firewall. The flow:
+
+1. The agent **commits** inside the VM. Commits are attributed to your host git
+   identity, which `./vibe` carries in at launch (as `GIT_AUTHOR_*`/`GIT_COMMITTER_*`
+   env — nothing stored in the VM).
+2. Because the repo is virtiofs-shared, those commits are immediately present in
+   the host directory. **You `git push` from the host** there, with your normal
+   SSH keys / credentials.
+
+(If you ever want the agent to push autonomously instead, switch to an HTTPS
+remote, allowlist the git host, and inject a scoped token at launch — see git
+history / ask, as it trades some isolation for autonomy.)
+
 ## Day-to-day
 
 ```sh
