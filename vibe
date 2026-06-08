@@ -28,8 +28,12 @@ case "${1:-claude}" in
     exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
       runuser -u vibe -- bash -l
     ;;
+  firewall)
+    # Toggle the egress allowlist (root inside the VM; the agent can't).
+    exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
+    ;;
   *)
-    echo "usage: $(basename "$0") [claude|shell]" >&2
+    echo "usage: $(basename "$0") [claude | shell | firewall <on|off|status>]" >&2
     exit 1
     ;;
 esac

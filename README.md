@@ -32,6 +32,7 @@ This setup contains all of that with three layers:
 | `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java, lighthouse. |
 | `guest/docker.sh` | Docker engine + compose + buildx (rootful); routes daemon pulls through tinyproxy. |
 | `guest/init-firewall.sh` | The nftables rules that force all egress through tinyproxy. |
+| `guest/firewall.sh` | `vibe-firewall` control script — toggles the egress allowlist on/off. |
 | `secrets.env` | Your scoped `ANTHROPIC_API_KEY` (gitignored; injected only at launch). |
 | `project/` | Your code — shared **live** with the VM at `/home/vibe/project`. |
 
@@ -53,6 +54,7 @@ the VM.
 ```sh
 ./vibe                  # Claude in auto mode, in ~/project
 ./vibe shell            # plain shell in the VM (unprivileged vibe user)
+./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
 
 incus snapshot restore vibevm clean   # roll back a messed-up VM
 incus stop vibevm                     # pause
@@ -125,6 +127,22 @@ incus exec vibevm -- bash /usr/local/bin/harden.sh
 Inspect the live policy: `incus exec vibevm -- nft list ruleset` and
 `incus exec vibevm -- cat /etc/tinyproxy/allowlist`. Denied requests show up as
 `403 Filtered`/`CONNECT tunnel failed` to the client and in tinyproxy's log.
+
+## Turning the egress firewall off
+
+The allowlist can be toggled at runtime, and the choice persists across reboots:
+
+```sh
+./vibe firewall off      # open egress — allowlist no longer enforced
+./vibe firewall on       # re-enforce the allowlist (default)
+./vibe firewall status
+```
+
+`off` removes the nftables lockdown and stops tinyproxy filtering, giving the VM
+unrestricted egress — handy when you knowingly need broad network access, at the
+cost of the anti-exfiltration layer (the VM stays your isolation boundary). Only
+the host operator can flip it; it needs root in the VM, so the `vibe` agent
+can't disable it on its own.
 
 ## Caveats / known trade-offs
 

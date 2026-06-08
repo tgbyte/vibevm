@@ -32,23 +32,21 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)ghcr\.io$
 EOF
 
-cat >/etc/tinyproxy/tinyproxy.conf <<'EOF'
-User tinyproxy
-Group tinyproxy
-Port 8888
-Listen 127.0.0.1
-Timeout 600
-LogLevel Warning
-Allow 127.0.0.1
-FilterDefaultDeny Yes
-FilterExtended On
-FilterCaseSensitive Off
-Filter "/etc/tinyproxy/allowlist"
-ConnectPort 443
-ConnectPort 80
+chmod 0644 /etc/tinyproxy/allowlist
+
+echo "== AppArmor: let tinyproxy read the allowlist filter file =="
+# The shipped tinyproxy profile only permits tinyproxy.conf; custom files go in
+# the local override it includes. Without this, enforcing mode fails to start.
+install -d /etc/apparmor.d/local
+cat >/etc/apparmor.d/local/tinyproxy <<'EOF'
+# vibevm: permit tinyproxy to read the egress allowlist filter file
+/etc/tinyproxy/allowlist r,
 EOF
+apparmor_parser -r /etc/apparmor.d/tinyproxy 2>/dev/null || systemctl reload apparmor 2>/dev/null || true
+
 systemctl enable tinyproxy
-systemctl restart tinyproxy
+# tinyproxy.conf is written by the vibe-firewall control script, which is
+# on/off aware (it includes the Filter directives only when enforcing).
 
 echo "== Pointing tools at the proxy =="
 cat >/etc/profile.d/proxy.sh <<'EOF'
@@ -65,7 +63,9 @@ Acquire::https::Proxy "http://127.0.0.1:8888";
 EOF
 
 echo "== Installing egress firewall service =="
-chmod +x /usr/local/bin/init-firewall.sh
+chmod +x /usr/local/bin/init-firewall.sh /usr/local/sbin/vibe-firewall
+mkdir -p /etc/vibe
+[ -f /etc/vibe/firewall ] || echo on >/etc/vibe/firewall   # default: enforced
 cat >/etc/systemd/system/vibe-firewall.service <<'EOF'
 [Unit]
 Description=vibe egress allowlist firewall
@@ -74,7 +74,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/init-firewall.sh
+ExecStart=/usr/local/sbin/vibe-firewall apply
 RemainAfterExit=yes
 
 [Install]
@@ -82,7 +82,7 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable vibe-firewall.service
-systemctl restart vibe-firewall.service
+/usr/local/sbin/vibe-firewall "$(cat /etc/vibe/firewall)"
 
-echo "== Active ruleset =="
-nft list ruleset
+echo "== Firewall status =="
+/usr/local/sbin/vibe-firewall status

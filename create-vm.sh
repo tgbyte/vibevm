@@ -39,6 +39,7 @@ incus file push "$HERE/guest/harden.sh"        "$VM/usr/local/bin/harden.sh"    
 incus file push "$HERE/guest/devtools.sh"      "$VM/usr/local/bin/devtools.sh"      --mode 0755
 incus file push "$HERE/guest/docker.sh"        "$VM/usr/local/bin/docker.sh"        --mode 0755
 incus file push "$HERE/guest/init-firewall.sh" "$VM/usr/local/bin/init-firewall.sh" --mode 0755
+incus file push "$HERE/guest/firewall.sh"      "$VM/usr/local/sbin/vibe-firewall"   --mode 0755
 
 echo "== Provisioning (installs tooling, creates vibe user, enables firewall) =="
 incus exec "$VM" --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" -- bash /root/provision.sh
