@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Launch Claude in auto mode (or a shell) inside the vibevm sandbox.
+#   ./vibe          -> claude --dangerously-skip-permissions in ~/project
+#   ./vibe shell    -> plain login shell as the unprivileged vibe user
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+VM=vibevm
+
+ENVFLAGS=()
+if [ -f "$HERE/secrets.env" ]; then
+  set -a; . "$HERE/secrets.env"; set +a
+  [ -n "${ANTHROPIC_API_KEY:-}" ] && ENVFLAGS+=(--env "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
+fi
+
+if ! incus info "$VM" >/dev/null 2>&1; then
+  echo "VM '$VM' not found. Run ./create-vm.sh first." >&2
+  exit 1
+fi
+[ "$(incus info "$VM" | awk '/Status/{print $2}')" = RUNNING ] || incus start "$VM"
+until incus exec "$VM" -- true 2>/dev/null; do sleep 1; done
+
+case "${1:-claude}" in
+  claude)
+    exec incus exec "$VM" --tty "${ENVFLAGS[@]}" -- \
+      runuser -u vibe -- bash -lc 'cd ~/project && exec claude --dangerously-skip-permissions'
+    ;;
+  shell)
+    exec incus exec "$VM" --tty "${ENVFLAGS[@]}" -- \
+      runuser -u vibe -- bash -l
+    ;;
+  *)
+    echo "usage: $(basename "$0") [claude|shell]" >&2
+    exit 1
+    ;;
+esac
