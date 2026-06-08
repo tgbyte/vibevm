@@ -46,8 +46,8 @@ if [ -n "$existing_group" ] && [ "$existing_group" != vibe ]; then
 fi
 getent group vibe >/dev/null || groupadd -g "$HOST_GID" vibe 2>/dev/null || groupadd vibe
 id vibe >/dev/null 2>&1 || useradd -m -u "$HOST_UID" -g vibe -s /bin/bash vibe
-mkdir -p /home/vibe/project
-chown vibe:vibe /home/vibe/project
+mkdir -p /home/vibe/workspace
+chown vibe:vibe /home/vibe/workspace
 
 echo "== Installing developer runtimes (chrome, nvm/node, sdkman/java) =="
 bash /usr/local/bin/devtools.sh

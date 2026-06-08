@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Launch Claude in auto mode (or a shell) inside the vibevm sandbox.
-#   ./vibe          -> claude --dangerously-skip-permissions in ~/project
+#   ./vibe          -> claude --dangerously-skip-permissions in ~/workspace
 #   ./vibe shell    -> plain login shell as the unprivileged vibe user
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -22,7 +22,7 @@ until incus exec "$VM" -- true 2>/dev/null; do sleep 1; done
 case "${1:-claude}" in
   claude)
     exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
-      runuser -u vibe -- bash -lc 'cd ~/project && exec claude --dangerously-skip-permissions'
+      runuser -u vibe -- bash -lc 'cd ~/workspace && exec claude --dangerously-skip-permissions'
     ;;
   shell)
     exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- \
@@ -32,8 +32,12 @@ case "${1:-claude}" in
     # Toggle the egress allowlist (root inside the VM; the agent can't).
     exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
     ;;
+  mounts)
+    # Sync ~/workspace mounts to match ./workspace/* and ./workspaces.conf.
+    exec "$HERE/mount-workspaces.sh"
+    ;;
   *)
-    echo "usage: $(basename "$0") [claude | shell | firewall <on|off|status>]" >&2
+    echo "usage: $(basename "$0") [claude | shell | mounts | firewall <on|off|status>]" >&2
     exit 1
     ;;
 esac

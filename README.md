@@ -34,7 +34,9 @@ This setup contains all of that with three layers:
 | `guest/init-firewall.sh` | The nftables rules that force all egress through tinyproxy. |
 | `guest/firewall.sh` | `vibe-firewall` control script — toggles the egress allowlist on/off. |
 | `secrets.env` | Your scoped `ANTHROPIC_API_KEY` (gitignored; injected only at launch). |
-| `project/` | Your code — shared **live** with the VM at `/home/vibe/project`. |
+| `mount-workspaces.sh` | Mounts host project dirs into the VM under `~/workspace` (live virtiofs). |
+| `workspaces.conf` | Host dirs to mount (gitignored; see `.example`). |
+| `workspace/` | Drop/clone projects here; each subdir appears at `~/workspace/<name>`. |
 
 ## Setup
 
@@ -45,14 +47,28 @@ cp secrets.env.example secrets.env && $EDITOR secrets.env   # optional: scoped A
 ./vibe                  # vibe-code in auto mode
 ```
 
-Put the project you want to work on in `./project/` (e.g. `git clone` into it). You
-edit it on the host with your normal tools; Claude works on the same files inside
-the VM.
+Put the projects you want to work on under `~/workspace` (see below). You edit
+them on the host with your normal tools; Claude works on the same files in the VM.
+
+### Mounting projects (`~/workspace`)
+
+Multiple host directories can be mounted into the VM, each appearing at
+`/home/vibe/workspace/<name>` (shared live via virtiofs). Two ways, combinable:
+
+- **Drop-in:** put or `git clone` projects into `./workspace/<name>/` — every
+  subdirectory there is mounted automatically.
+- **External paths:** list host directories in `./workspaces.conf` (copy
+  `workspaces.conf.example`); `/abs/path` or `name=/abs/path`, one per line.
+
+Apply changes any time with `./vibe mounts`. Paths must be readable by the incus
+daemon (anywhere under your home works). `./vibe` then starts Claude in
+`~/workspace`, so it sees all mounted projects.
 
 ## Day-to-day
 
 ```sh
-./vibe                  # Claude in auto mode, in ~/project
+./vibe                  # Claude in auto mode, in ~/workspace
+./vibe mounts           # (re)mount project dirs after editing workspaces.conf
 ./vibe shell            # plain shell in the VM (unprivileged vibe user)
 ./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
 
@@ -158,4 +174,4 @@ can't disable it on its own.
   in the VM, and container traffic bypasses the allowlist. Rely on the VM boundary
   (not the allowlist) against Docker misuse — see the Docker section.
 - **Don't reuse credentials**: use a scoped/low-privilege `ANTHROPIC_API_KEY`, and
-  don't mount host SSH keys or cloud creds into `project/`.
+  don't mount host SSH keys or cloud creds into `~/workspace`.

@@ -1,0 +1,15 @@
+# Host directories to mount into the VM under ~/workspace.
+# Copy to workspaces.conf (gitignored) and list one directory per line.
+# After editing, apply with:  ./vibe mounts
+#
+#   /abs/host/path          ->  ~/workspace/<basename>
+#   name=/abs/host/path     ->  ~/workspace/<name>
+#   ~ is expanded; blank lines and #comments are ignored.
+#
+# Examples:
+# /home/you/dev/my-api
+# frontend=/home/you/dev/customer-portal
+# ~/code/experiments
+#
+# (Alternatively, just drop or clone projects into ./workspace/<name>/ —
+#  every subdirectory there is mounted automatically.)

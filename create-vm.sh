@@ -15,7 +15,7 @@ if ! incus info >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p "$HERE/project"
+mkdir -p "$HERE/workspace"
 
 if ! incus info "$VM" >/dev/null 2>&1; then
   echo "== Launching VM '$VM' ($IMG, ${CPU} vCPU / ${MEM} / ${DISK}) =="
@@ -44,9 +44,8 @@ incus file push "$HERE/guest/firewall.sh"      "$VM/usr/local/sbin/vibe-firewall
 echo "== Provisioning (installs tooling, creates vibe user, enables firewall) =="
 incus exec "$VM" --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" -- bash /root/provision.sh
 
-echo "== Sharing $HERE/project -> /home/vibe/project (virtiofs) =="
-incus config device get "$VM" project source >/dev/null 2>&1 || \
-  incus config device add "$VM" project disk source="$HERE/project" path=/home/vibe/project
+echo "== Mounting workspace directories (virtiofs) =="
+bash "$HERE/mount-workspaces.sh"
 
 echo "== Baseline snapshot 'clean' =="
 incus snapshot show "$VM" clean >/dev/null 2>&1 || incus snapshot create "$VM" clean
@@ -60,5 +59,6 @@ Next:
   2. start vibe-coding in auto mode:               ./vibe
      or get a plain shell in the VM:               ./vibe shell
 
-Your code lives in ./project (shared live with the VM at /home/vibe/project).
+Mount projects under ~/workspace: drop/clone them into ./workspace/<name>/ or list
+host paths in ./workspaces.conf, then run ./vibe mounts (see workspaces.conf.example).
 EOF
