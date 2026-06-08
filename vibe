@@ -45,8 +45,12 @@ case "${1:-claude}" in
     # Sync ~/workspace mounts to match ./workspace/* and ./workspaces.conf.
     exec "$HERE/mount-workspaces.sh"
     ;;
+  statusline)
+    # Re-sync the Claude status line from the host into the VM.
+    exec "$HERE/sync-statusline.sh"
+    ;;
   *)
-    echo "usage: $(basename "$0") [claude | shell | mounts | firewall <on|off|status>]" >&2
+    echo "usage: $(basename "$0") [claude | shell | mounts | statusline | firewall <on|off|status>]" >&2
     exit 1
     ;;
 esac

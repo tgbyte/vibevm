@@ -85,6 +85,7 @@ history / ask, as it trades some isolation for autonomy.)
 ```sh
 ./vibe                  # Claude in auto mode, in ~/workspace
 ./vibe mounts           # (re)mount project dirs after editing workspaces.conf
+./vibe statusline       # re-sync your host Claude status line into the VM
 ./vibe shell            # plain shell in the VM (unprivileged vibe user)
 ./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
 
