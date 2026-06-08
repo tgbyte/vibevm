@@ -47,8 +47,19 @@ incus exec "$VM" --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" -- bash /ro
 echo "== Mounting workspace directories (virtiofs) =="
 bash "$HERE/mount-workspaces.sh"
 
-echo "== Baseline snapshot 'clean' =="
-incus snapshot show "$VM" clean >/dev/null 2>&1 || incus snapshot create "$VM" clean
+echo "== Installing the Claude status line for vibe =="
+incus exec "$VM" -- install -d -o vibe -g vibe /home/vibe/.claude
+incus file push "$HERE/guest/statusline-command.sh" "$VM/home/vibe/.claude/statusline-command.sh" \
+  --uid "$(id -u)" --gid "$(id -g)" --mode 0755
+incus exec "$VM" -- bash -c 'S=/home/vibe/.claude/settings.json; t=$(mktemp); { [ -f "$S" ] && cat "$S" || echo "{}"; } | jq ".statusLine={type:\"command\",command:\"bash ~/.claude/statusline-command.sh\"}" > "$t" && install -o vibe -g vibe -m 0644 "$t" "$S" && rm -f "$t"'
+
+echo "== Baseline snapshot 'clean' (VM stopped to avoid the fsfreeze hang) =="
+if ! incus snapshot show "$VM" clean >/dev/null 2>&1; then
+  incus stop "$VM" --timeout 60
+  incus snapshot create "$VM" clean
+  incus start "$VM"
+  until incus exec "$VM" -- true 2>/dev/null; do sleep 2; done
+fi
 
 cat <<EOF
 
