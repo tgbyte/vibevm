@@ -18,7 +18,7 @@ This setup contains all of that with three layers:
 | --- | --- |
 | **Blast radius** | A full KVM VM (separate kernel). Trash it and restore the `clean` snapshot. |
 | **Egress allowlist** | In-VM domain-allowlisting proxy (`tinyproxy`); `nftables` forces all web egress through it (default-drop otherwise). |
-| **Least privilege** | Claude runs as the unprivileged `vibe` user with **no sudo**, so it can't disable the firewall. IPv6 is off so the v4 allowlist is total. Only a *scoped* API key is injected, at launch. |
+| **Least privilege** | Claude runs as the unprivileged `vibe` user with **no sudo**. IPv6 is off so the v4 allowlist is total. Only a *scoped* API key is injected, at launch. (Rootful Docker is a deliberate exception that relaxes this — see the Docker section.) |
 
 ## Files
 
@@ -30,6 +30,7 @@ This setup contains all of that with three layers:
 | `guest/provision.sh` | Runs inside the VM: tooling, Claude Code, `vibe` user, then calls `harden.sh`. |
 | `guest/harden.sh` | Network policy: installs tinyproxy + the domain allowlist, points tools at it, enables the firewall. |
 | `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java, lighthouse. |
+| `guest/docker.sh` | Docker engine + compose + buildx (rootful); routes daemon pulls through tinyproxy. |
 | `guest/init-firewall.sh` | The nftables rules that force all egress through tinyproxy. |
 | `secrets.env` | Your scoped `ANTHROPIC_API_KEY` (gitignored; injected only at launch). |
 | `project/` | Your code — shared **live** with the VM at `/home/vibe/project`. |
@@ -82,6 +83,26 @@ Auditing an **external** URL also requires that site's domain in the allowlist
 (Chrome routes through tinyproxy automatically). To pin versions reproducibly,
 set `NODE_DEFAULT` / `JAVA_VERSION` at the top of `guest/devtools.sh`.
 
+## Docker (rootful)
+
+Docker (engine + `docker compose` + `docker buildx`) is installed and `vibe` is
+in the `docker` group, so `docker` works directly in `./vibe` / `./vibe shell`.
+
+- **Image pulls** are made by the daemon and routed through tinyproxy, so the
+  registry must be allowlisted. Allowed by default: Docker Hub
+  (`docker.io`/`docker.com`) and `ghcr.io`. Add others (`quay.io`, `gcr.io`,
+  `registry.k8s.io`, …) the same way as any domain (see below).
+- **Container** traffic reaches the internet via Docker's own NAT and is *not*
+  bound by the allowlist (the accepted trade-off of rootful Docker), so
+  `RUN apt-get` / `npm install` in builds just work.
+
+**Security trade-off:** the `docker` group is root-equivalent inside the VM, so a
+compromised or over-eager agent could escalate to root, disable the firewall, and
+exfiltrate via a container. The **VM (separate kernel, throwaway, snapshot)
+remains the real isolation boundary** — keep host secrets and real credentials
+out of it. (For strict egress instead, rebuild without `docker.sh`, or switch to
+rootless Docker.)
+
 ## Adjusting the network allowlist
 
 Egress is default-deny and allowlisted **by domain** (robust to CDN IP changes).
@@ -115,5 +136,8 @@ Inspect the live policy: `incus exec vibevm -- nft list ruleset` and
   isolation, but worth knowing.
 - **System packages**: the `vibe` user has no sudo by design. Install OS packages
   by adding them to `guest/provision.sh` and re-running, not from inside a session.
+- **Rootful Docker weakens egress control**: the `docker` group is root-equivalent
+  in the VM, and container traffic bypasses the allowlist. Rely on the VM boundary
+  (not the allowlist) against Docker misuse — see the Docker section.
 - **Don't reuse credentials**: use a scoped/low-privilege `ANTHROPIC_API_KEY`, and
   don't mount host SSH keys or cloud creds into `project/`.

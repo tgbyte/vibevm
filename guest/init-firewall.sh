@@ -24,7 +24,9 @@ while read -r ip _; do
   [ -n "$ip" ] && ANT["$ip"]=1
 done < <(getent ahostsv4 api.anthropic.com 2>/dev/null | awk '{print $1}' | sort -u)
 
-nft flush ruleset
+# Only reset OUR table — never `nft flush ruleset`, which would wipe Docker's
+# NAT/filter tables and break container networking on every reapply.
+nft delete table inet vibe 2>/dev/null || true
 nft add table inet vibe
 nft add chain inet vibe output '{ type filter hook output priority 0 ; policy drop ; }'
 

@@ -37,6 +37,7 @@ echo "== Pushing provisioning scripts =="
 incus file push "$HERE/guest/provision.sh"     "$VM/root/provision.sh"              --mode 0755
 incus file push "$HERE/guest/harden.sh"        "$VM/usr/local/bin/harden.sh"        --mode 0755
 incus file push "$HERE/guest/devtools.sh"      "$VM/usr/local/bin/devtools.sh"      --mode 0755
+incus file push "$HERE/guest/docker.sh"        "$VM/usr/local/bin/docker.sh"        --mode 0755
 incus file push "$HERE/guest/init-firewall.sh" "$VM/usr/local/bin/init-firewall.sh" --mode 0755
 
 echo "== Provisioning (installs tooling, creates vibe user, enables firewall) =="

@@ -52,6 +52,9 @@ chown vibe:vibe /home/vibe/project
 echo "== Installing developer runtimes (chrome, nvm/node, sdkman/java) =="
 bash /usr/local/bin/devtools.sh
 
+echo "== Installing Docker (rootful) =="
+bash /usr/local/bin/docker.sh
+
 echo "== Applying network egress policy (tinyproxy + firewall) =="
 bash /usr/local/bin/harden.sh
 

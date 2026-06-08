@@ -27,6 +27,9 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)pythonhosted\.org$
 (^|\.)sdkman\.io$
 ^dl\.google\.com$
+(^|\.)docker\.io$
+(^|\.)docker\.com$
+(^|\.)ghcr\.io$
 EOF
 
 cat >/etc/tinyproxy/tinyproxy.conf <<'EOF'
