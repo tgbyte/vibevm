@@ -9,7 +9,9 @@ VM=vibevm
 ENVFLAGS=()
 if [ -f "$HERE/secrets.env" ]; then
   set -a; . "$HERE/secrets.env"; set +a
-  [ -n "${ANTHROPIC_API_KEY:-}" ] && ENVFLAGS+=(--env "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
+  for v in ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL ANTHROPIC_MODEL ANTHROPIC_SMALL_FAST_MODEL; do
+    [ -n "${!v:-}" ] && ENVFLAGS+=(--env "$v=${!v}")
+  done
 fi
 
 # Carry the host git identity into the session so the agent can commit in the VM
@@ -27,6 +29,13 @@ if ! incus info "$VM" >/dev/null 2>&1; then
 fi
 [ "$(incus info "$VM" | awk '/Status/{print $2}')" = RUNNING ] || incus start "$VM"
 until incus exec "$VM" -- true 2>/dev/null; do sleep 1; done
+
+# Claude connects to its API endpoint directly (not via the proxy), so a custom
+# ANTHROPIC_BASE_URL host must be allowed for direct egress. Register it once.
+if [ -n "${ANTHROPIC_BASE_URL:-}" ]; then
+  apihost="$(printf '%s' "$ANTHROPIC_BASE_URL" | sed -E 's#^[a-zA-Z]+://([^/:]+).*#\1#')"
+  [ -n "$apihost" ] && incus exec "$VM" -- bash -c "install -d /etc/vibe; touch /etc/vibe/api-hosts; grep -qxF '$apihost' /etc/vibe/api-hosts || { echo '$apihost' >> /etc/vibe/api-hosts; /usr/local/sbin/vibe-firewall apply >/dev/null; }"
+fi
 
 case "${1:-claude}" in
   claude)

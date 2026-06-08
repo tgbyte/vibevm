@@ -80,6 +80,21 @@ credentials and SSH (port 22) is blocked by the firewall. The flow:
 remote, allowlist the git host, and inject a scoped token at launch — see git
 history / ask, as it trades some isolation for autonomy.)
 
+### Custom API endpoint (`ANTHROPIC_BASE_URL`)
+
+To point Claude at a gateway (e.g. LiteLLM) instead of `api.anthropic.com`, set in
+`secrets.env`:
+
+```sh
+ANTHROPIC_BASE_URL=https://llm-gateway.example.com
+ANTHROPIC_AUTH_TOKEN=...        # or ANTHROPIC_API_KEY, per your gateway
+```
+
+`./vibe` forwards these into the VM and — because Claude connects to its API
+endpoint **directly** (not through tinyproxy) — automatically allows that host for
+direct egress (appended to `/etc/vibe/api-hosts`, alongside `api.anthropic.com`).
+No firewall edits needed; it works with the allowlist on.
+
 ## Day-to-day
 
 ```sh

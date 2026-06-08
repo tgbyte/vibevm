@@ -18,11 +18,23 @@ for f in /etc/resolv.conf /run/systemd/resolve/resolv.conf; do
   done < "$f"
 done
 
-# Resolve api.anthropic.com now (stable IPs) for the direct fallback path.
+# Hosts reachable DIRECTLY on 443. Claude Code connects to its API endpoint
+# directly (not through the proxy), so the endpoint must be allowed here.
+# Always api.anthropic.com, plus any extra endpoints listed in /etc/vibe/api-hosts
+# (e.g. an ANTHROPIC_BASE_URL gateway — the launcher adds it from secrets.env).
+API_HOSTS=(api.anthropic.com)
+if [ -f /etc/vibe/api-hosts ]; then
+  while read -r h; do
+    h="${h%%#*}"; h="${h//[[:space:]]/}"
+    [ -n "$h" ] && API_HOSTS+=("$h")
+  done < /etc/vibe/api-hosts
+fi
 declare -A ANT=()
-while read -r ip _; do
-  [ -n "$ip" ] && ANT["$ip"]=1
-done < <(getent ahostsv4 api.anthropic.com 2>/dev/null | awk '{print $1}' | sort -u)
+for host in "${API_HOSTS[@]}"; do
+  while read -r ip _; do
+    [ -n "$ip" ] && ANT["$ip"]=1
+  done < <(getent ahostsv4 "$host" 2>/dev/null | awk '{print $1}' | sort -u)
+done
 
 # Only reset OUR table — never `nft flush ruleset`, which would wipe Docker's
 # NAT/filter tables and break container networking on every reapply.
@@ -46,11 +58,11 @@ nft add rule inet vibe output udp dport 67 accept
 # Only tinyproxy may reach the wider web; it enforces the domain allowlist.
 nft add rule inet vibe output meta skuid "$TPUID" tcp dport '{ 80, 443 }' accept
 
-# Direct fallback to Anthropic (in case Claude ignores the proxy env).
-nft add set inet vibe anthropic '{ type ipv4_addr ; }'
+# Direct 443 egress to the API hosts (Claude reaches its endpoint directly).
+nft add set inet vibe api '{ type ipv4_addr ; }'
 for ip in "${!ANT[@]}"; do
-  nft add element inet vibe anthropic "{ $ip }"
+  nft add element inet vibe api "{ $ip }"
 done
-nft add rule inet vibe output ip daddr @anthropic tcp dport 443 accept
+nft add rule inet vibe output ip daddr @api tcp dport 443 accept
 
-echo "vibe-firewall: proxy uid=$TPUID, anthropic direct=${#ANT[@]} IP(s), DNS resolvers=${#RES[@]}."
+echo "vibe-firewall: proxy uid=$TPUID, direct API IPs=${#ANT[@]} (${API_HOSTS[*]}), DNS resolvers=${#RES[@]}."
