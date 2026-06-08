@@ -66,6 +66,15 @@ for n in "${!WANT[@]}"; do
   incus config device add "$VM" "$dev" disk source="$src" path="$gpath" >/dev/null
 done
 
+# Wait for hotplugged virtiofs mounts to settle, so callers see them immediately
+# and the prune below doesn't race a not-yet-mounted target.
+for n in "${!WANT[@]}"; do
+  for _ in $(seq 1 30); do
+    incus exec "$VM" -- findmnt -rno TARGET "$BASE/$n" >/dev/null 2>&1 && break
+    sleep 0.3
+  done
+done
+
 # Prune empty leftover mountpoints (rmdir refuses busy mounts and non-empty dirs)
 incus exec "$VM" -- bash -c "for d in $BASE/*/; do rmdir \"\$d\" 2>/dev/null || true; done" 2>/dev/null || true
 
