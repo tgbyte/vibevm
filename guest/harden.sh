@@ -15,6 +15,7 @@ install -d /etc/tinyproxy
 # then: systemctl restart tinyproxy
 cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)anthropic\.com$
+(^|\.)claude\.com$
 (^|\.)github\.com$
 (^|\.)githubusercontent\.com$
 (^|\.)githubassets\.com$

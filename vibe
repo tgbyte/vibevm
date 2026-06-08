@@ -10,9 +10,14 @@ VM=vibevm
 ENVFLAGS=()
 if [ -f "$HERE/secrets.env" ]; then
   set -a; . "$HERE/secrets.env"; set +a
-  for v in ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL ANTHROPIC_MODEL ANTHROPIC_SMALL_FAST_MODEL; do
-    [ -n "${!v:-}" ] && ENVFLAGS+=(--env "$v=${!v}")
-  done
+  # Forward every variable assigned in secrets.env into the VM session.
+  while IFS= read -r line; do
+    line="${line#"${line%%[![:space:]]*}"}"          # strip leading whitespace
+    case "$line" in ''|'#'*) continue ;; esac
+    key="${line%%=*}"; key="${key#export }"; key="${key//[[:space:]]/}"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    [ -n "${!key:-}" ] && ENVFLAGS+=(--env "$key=${!key}")
+  done < "$HERE/secrets.env"
 fi
 
 # Carry the host git identity into the session so the agent can commit in the VM
