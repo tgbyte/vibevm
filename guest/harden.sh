@@ -30,6 +30,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)docker\.io$
 (^|\.)docker\.com$
 (^|\.)ghcr\.io$
+^llm-gateway\.example\.com$
 EOF
 
 chmod 0644 /etc/tinyproxy/allowlist
