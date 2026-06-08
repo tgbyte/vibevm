@@ -64,9 +64,9 @@ esac
 # Start Claude (default) or a login shell in ~/workspace[/PROJECT]. The project
 # is passed as a positional arg (not interpolated) so names with spaces are safe.
 if [ "$runmode" = shell ]; then
-  exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
+  exec incus exec "$VM" -t --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
     bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such dir: ~/workspace/$1" >&2; exit 1; }; exec bash -l' _ "$proj"
 else
-  exec incus exec "$VM" --tty --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
+  exec incus exec "$VM" -t --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
     bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such project: ~/workspace/$1 (mounted? try ./vibe mounts)" >&2; exit 1; }; exec claude --dangerously-skip-permissions' _ "$proj"
 fi
