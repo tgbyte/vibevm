@@ -49,6 +49,9 @@ id vibe >/dev/null 2>&1 || useradd -m -u "$HOST_UID" -g vibe -s /bin/bash vibe
 mkdir -p /home/vibe/workspace
 chown vibe:vibe /home/vibe/workspace
 
+echo "== Setting up clock sync from the host (chrony + KVM PTP, no network) =="
+bash /usr/local/bin/timesync.sh
+
 echo "== Installing developer runtimes (chrome, nvm/node, sdkman/java) =="
 bash /usr/local/bin/devtools.sh
 

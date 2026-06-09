@@ -36,6 +36,7 @@ until incus exec "$VM" -- getent hosts archive.ubuntu.com >/dev/null 2>&1; do sl
 echo "== Pushing provisioning scripts =="
 incus file push "$HERE/guest/provision.sh"     "$VM/root/provision.sh"              --mode 0755
 incus file push "$HERE/guest/harden.sh"        "$VM/usr/local/bin/harden.sh"        --mode 0755
+incus file push "$HERE/guest/timesync.sh"      "$VM/usr/local/bin/timesync.sh"      --mode 0755
 incus file push "$HERE/guest/devtools.sh"      "$VM/usr/local/bin/devtools.sh"      --mode 0755
 incus file push "$HERE/guest/docker.sh"        "$VM/usr/local/bin/docker.sh"        --mode 0755
 incus file push "$HERE/guest/init-firewall.sh" "$VM/usr/local/bin/init-firewall.sh" --mode 0755
