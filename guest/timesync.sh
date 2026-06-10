@@ -24,6 +24,13 @@ cat >/etc/chrony/conf.d/ptp-kvm.conf <<'EOF'
 # vibevm: sync from the host clock via the KVM virtual PTP device.
 # The egress firewall blocks NTP (UDP 123); the PHC needs no network.
 refclock PHC /dev/ptp0 poll 2 dpoll -1 offset 0 stratum 1
+
+# Host suspend/resume freezes the guest vCPUs, so on resume the clock is
+# suddenly hours behind. Default "makestep 1 3" only steps during the first
+# 3 updates after startup and slews afterwards, which can never catch up a
+# multi-hour jump. Allow chrony to step on any offset > 1s at any time so it
+# re-corrects within one poll interval after every resume.
+makestep 1 -1
 EOF
 
 systemctl enable chrony
