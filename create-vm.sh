@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Creates + provisions the vibevm sandbox. Run as your normal user AFTER
-# bootstrap.sh and a re-login (so you're in the incus-admin group). Idempotent.
+# bootstrap.sh and a re-login (so you're in the incus-admin group). Idempotent;
+# pass --rebuild to delete the existing VM and recreate it from scratch.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
@@ -10,12 +11,46 @@ CPU=8
 MEM=16GiB
 DISK=40GiB
 
+REBUILD=0; ASSUME_YES=0
+for arg in "$@"; do
+  case "$arg" in
+    -r|--rebuild) REBUILD=1 ;;
+    -y|--yes)     ASSUME_YES=1 ;;
+    -h|--help)
+      echo "usage: $(basename "$0") [--rebuild] [--yes]"
+      echo "  --rebuild  delete the existing VM and recreate it (host-backed"
+      echo "             ./claude-home and ./workspace mounts are preserved)"
+      echo "  --yes      skip the delete confirmation prompt"
+      exit 0 ;;
+    *) echo "unknown option: $arg (try --help)" >&2; exit 1 ;;
+  esac
+done
+
 if ! incus info >/dev/null 2>&1; then
   echo "Can't reach the incus daemon. Run ./bootstrap.sh first, then start a new shell." >&2
   exit 1
 fi
 
 mkdir -p "$HERE/workspace"
+
+if [ "$REBUILD" = 1 ] && incus info "$VM" >/dev/null 2>&1; then
+  # Capture ~/.claude to the host before wiping the VM disk, unless it's already
+  # host-backed (claude-home device attached). persist-claude.sh refuses while a
+  # claude session is running, which aborts the rebuild here — by design.
+  if ! incus config device get "$VM" claude-home source >/dev/null 2>&1; then
+    echo "== ~/.claude not yet persisted — capturing it to the host first =="
+    bash "$HERE/persist-claude.sh"
+  fi
+  echo "Rebuilding: this DELETES the VM '$VM' and its snapshots."
+  echo "Preserved (host-backed): ./claude-home (~/.claude), ./workspace + workspaces.conf mounts, secrets.env."
+  echo "Anything stored only on the VM disk is lost."
+  if [ "$ASSUME_YES" != 1 ]; then
+    printf "Proceed? [y/N] "; read -r ans
+    case "$ans" in y|Y|yes|YES) ;; *) echo "Aborted."; exit 1 ;; esac
+  fi
+  echo "== Deleting VM '$VM' =="
+  incus delete --force "$VM"
+fi
 
 if ! incus info "$VM" >/dev/null 2>&1; then
   echo "== Launching VM '$VM' ($IMG, ${CPU} vCPU / ${MEM} / ${DISK}) =="

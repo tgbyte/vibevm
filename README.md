@@ -108,7 +108,7 @@ No firewall edits needed; it works with the allowlist on.
 
 incus snapshot restore vibevm clean   # roll back a messed-up VM
 incus stop vibevm                     # pause
-incus delete --force vibevm           # nuke it; re-run ./create-vm.sh to rebuild
+./create-vm.sh --rebuild              # delete + recreate (host-backed state preserved)
 ```
 
 ### Persisting Claude's memory/history across rebuilds
@@ -124,9 +124,10 @@ auth). To keep it, back that directory with a host folder:
 This migrates the current `~/.claude` to `./claude-home/` (gitignored) and mounts
 it back at `/home/vibe/.claude` via virtiofs — so it lives on the host and
 survives `incus delete`. `create-vm.sh` re-attaches it automatically on every
-rebuild. Run `./vibe persist` **before** deleting the VM, or that state is lost.
-(Project-level memory like `CLAUDE.md`/`memory/` *inside* a project already
-persists via the workspace mount.)
+rebuild. Run `./vibe persist` **before** deleting the VM, or that state is lost
+— though `./create-vm.sh --rebuild` does this capture for you automatically
+before it deletes. (Project-level memory like `CLAUDE.md`/`memory/` *inside* a
+project already persists via the workspace mount.)
 
 ## Preinstalled runtimes
 
