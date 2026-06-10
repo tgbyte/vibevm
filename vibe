@@ -8,6 +8,11 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 VM=vibevm
 
 ENVFLAGS=()
+# Claude keeps its config (~/.claude.json) and state under CLAUDE_CONFIG_DIR.
+# Point it at the persisted ~/.claude mount so login + config survive rebuilds
+# (otherwise ~/.claude.json lives in HOME, outside the mount, and is lost).
+ENVFLAGS+=(--env "CLAUDE_CONFIG_DIR=/home/vibe/.claude")
+
 if [ -f "$HERE/secrets.env" ]; then
   set -a; . "$HERE/secrets.env"; set +a
   # Forward every variable assigned in secrets.env into the VM session.

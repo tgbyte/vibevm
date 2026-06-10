@@ -129,6 +129,12 @@ rebuild. Run `./vibe persist` **before** deleting the VM, or that state is lost
 before it deletes. (Project-level memory like `CLAUDE.md`/`memory/` *inside* a
 project already persists via the workspace mount.)
 
+Claude's main config lives in `~/.claude.json` — a file in `$HOME`, *outside*
+`~/.claude` — so `./vibe` sets `CLAUDE_CONFIG_DIR=/home/vibe/.claude`, which makes
+Claude keep both its config and state under the persisted mount. That's what
+keeps you logged in across rebuilds (the OAuth credential and account info live
+in `.claude.json` / `.credentials.json`).
+
 ## Preinstalled runtimes
 
 Beyond the base tooling (git, ripgrep, build-essential, system Python 3 / Node),
