@@ -48,6 +48,9 @@ incus exec "$VM" --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" -- bash /ro
 echo "== Mounting workspace directories (virtiofs) =="
 bash "$HERE/mount-workspaces.sh"
 
+echo "== Persisting ~/.claude across rebuilds =="
+bash "$HERE/persist-claude.sh"
+
 echo "== Installing the Claude status line for vibe =="
 bash "$HERE/sync-statusline.sh" --no-host-refresh
 

@@ -102,6 +102,7 @@ No firewall edits needed; it works with the allowlist on.
 ./vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
 ./vibe mounts           # (re)mount project dirs after editing workspaces.conf
 ./vibe statusline       # re-sync your host Claude status line into the VM
+./vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
 ./vibe shell [PROJECT]  # login shell in the VM (in ~/workspace[/PROJECT])
 ./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
 
@@ -109,6 +110,23 @@ incus snapshot restore vibevm clean   # roll back a messed-up VM
 incus stop vibevm                     # pause
 incus delete --force vibevm           # nuke it; re-run ./create-vm.sh to rebuild
 ```
+
+### Persisting Claude's memory/history across rebuilds
+
+`incus delete` wipes the VM disk, including `/home/vibe/.claude` (history,
+sessions, file-based memory under `projects/<proj>/memory/`, plans, tasks, and
+auth). To keep it, back that directory with a host folder:
+
+```sh
+./vibe persist          # close any running ./vibe session first
+```
+
+This migrates the current `~/.claude` to `./claude-home/` (gitignored) and mounts
+it back at `/home/vibe/.claude` via virtiofs — so it lives on the host and
+survives `incus delete`. `create-vm.sh` re-attaches it automatically on every
+rebuild. Run `./vibe persist` **before** deleting the VM, or that state is lost.
+(Project-level memory like `CLAUDE.md`/`memory/` *inside* a project already
+persists via the workspace mount.)
 
 ## Preinstalled runtimes
 

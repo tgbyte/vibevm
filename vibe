@@ -52,12 +52,16 @@ case "${1:-claude}" in
     # Re-sync the Claude status line from the host into the VM.
     exec "$HERE/sync-statusline.sh"
     ;;
+  persist)
+    # Back ~/.claude with host ./claude-home so it survives VM rebuilds.
+    exec "$HERE/persist-claude.sh"
+    ;;
   firewall)
     # Toggle the egress allowlist (root inside the VM; the agent can't).
     exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
     ;;
   -h|--help|help)
-    echo "usage: $(basename "$0") [PROJECT | claude [PROJECT] | shell [PROJECT] | mounts | statusline | firewall <on|off|status>]"
+    echo "usage: $(basename "$0") [PROJECT | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status>]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
     exit 0
     ;;
