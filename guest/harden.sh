@@ -34,6 +34,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 ^registry-mirror\.example\.com$
 ^llm-gateway\.example\.com$
 ^www\.example\.com$
+^pa\.example\.com$
 EOF
 
 chmod 0644 /etc/tinyproxy/allowlist
