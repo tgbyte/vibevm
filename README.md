@@ -143,7 +143,7 @@ Beyond the base tooling (git, ripgrep, build-essential, system Python 3 / Node),
 | Runtime | How | Notes |
 | --- | --- | --- |
 | **Node** | `nvm` (per-user, in `/home/vibe/.nvm`) | default = Node 22; `nvm install/use <ver>` to switch (downloads from the allowlisted nodejs.org). Shadows the system Node. |
-| **Java** | `SDKMAN` (per-user, in `/home/vibe/.sdkman`) | default = latest Temurin LTS; `sdk install java <ver>-tem && sdk default java <ver>-tem` to switch. |
+| **Java** | `SDKMAN` (per-user, in `/home/vibe/.sdkman`) | default = latest Temurin; **JDK 21** also installed. `sdk use java 21.0.x-tem` (this shell) or `sdk default java <ver>-tem` (global) to switch; `JAVA_EXTRA_MAJORS` adds more. |
 | **Maven + Gradle** | `SDKMAN` (per-user) | default = latest; both resolve **every** dependency, plugin, and buildscript repo through the Nexus mirror (see below). |
 | **Chrome + Lighthouse** | `google-chrome-stable` (system) + `lighthouse` (global, nvm) | `CHROME_PATH` is preset; the setuid sandbox works for the `vibe` user. |
 
@@ -158,8 +158,8 @@ lighthouse http://localhost:3000 --only-categories=performance --quiet
 
 Auditing an **external** URL also requires that site's domain in the allowlist
 (Chrome routes through tinyproxy automatically). To pin versions reproducibly,
-set `NODE_DEFAULT` / `JAVA_VERSION` / `MAVEN_VERSION` / `GRADLE_VERSION` at the
-top of `guest/devtools.sh`.
+set `NODE_DEFAULT` / `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` /
+`GRADLE_VERSION` at the top of `guest/devtools.sh`.
 
 ### Java builds via Nexus
 

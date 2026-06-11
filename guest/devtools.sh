@@ -14,7 +14,8 @@ export DEBIAN_FRONTEND=noninteractive
 VIBE_HOME=/home/vibe
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"   # nvm release tag
 NODE_DEFAULT="${NODE_DEFAULT:-22}"      # nvm default Node (major or full version)
-JAVA_VERSION="${JAVA_VERSION:-}"        # sdkman id e.g. 21.0.7-tem; empty = SDKMAN default
+JAVA_VERSION="${JAVA_VERSION:-}"        # sdkman id e.g. 21.0.7-tem; empty = SDKMAN default (becomes default)
+JAVA_EXTRA_MAJORS="${JAVA_EXTRA_MAJORS:-21}"  # extra Temurin majors to also install (newest patch each); space-separated
 MAVEN_VERSION="${MAVEN_VERSION:-}"      # sdkman id e.g. 3.9.9;  empty = SDKMAN default (latest)
 GRADLE_VERSION="${GRADLE_VERSION:-}"    # sdkman id e.g. 8.10;   empty = SDKMAN default (latest)
 # Every Maven/Gradle repository request is mirrored through this Nexus group, so
@@ -67,6 +68,14 @@ as_vibe '
   sed -i "s/^sdkman_auto_answer=.*/sdkman_auto_answer=true/" "$SDKMAN_DIR/etc/config" 2>/dev/null || true
   set +e; . "$SDKMAN_DIR/bin/sdkman-init.sh"; set -e
   if [ -n "'"$JAVA_VERSION"'" ];   then sdk install java   "'"$JAVA_VERSION"'";   else sdk install java;   fi
+  # Keep the version installed above as the default, then add extra Temurin
+  # majors (newest patch of each, resolved from the live list) alongside it.
+  primary="$(sdk current java 2>/dev/null | grep -oE "[0-9][0-9.]*-tem")"
+  for major in '"$JAVA_EXTRA_MAJORS"'; do
+    id="$(sdk list java | grep -oE "${major}\.[0-9.]+-tem" | sort -uV | tail -1)"
+    if [ -n "$id" ]; then sdk install java "$id"; else echo "devtools: no Temurin $major found"; fi
+  done
+  [ -n "$primary" ] && sdk default java "$primary"
   if [ -n "'"$MAVEN_VERSION"'" ];  then sdk install maven  "'"$MAVEN_VERSION"'";  else sdk install maven;  fi
   if [ -n "'"$GRADLE_VERSION"'" ]; then sdk install gradle "'"$GRADLE_VERSION"'"; else sdk install gradle; fi
 '
