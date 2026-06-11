@@ -4,6 +4,10 @@
 #   ./vibe .                -> PROJECT = current dir's name (last path segment == mount name)
 #   ./vibe claude [PROJECT] -> same, explicit (use if PROJECT clashes with a subcommand)
 #   ./vibe shell [PROJECT]  -> login shell in ~/workspace[/PROJECT]
+# Args after PROJECT are forwarded to claude / the shell, e.g.:
+#   ./vibe . --resume          resume-picker for this project's sessions
+#   ./vibe . -c                continue the most recent session
+#   ./vibe foo --resume <id>   resume a specific session by id
 set -euo pipefail
 # Resolve symlinks so $HERE is the repo dir even when run via a PATH symlink
 # (e.g. ~/bin/vibe -> .../vibevm/vibe); otherwise secrets.env and the helper
@@ -73,23 +77,31 @@ case "${1:-claude}" in
     echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status>]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
     echo "  '.' uses the current directory's name as PROJECT (last path segment == mount name)."
+    echo "  Args after PROJECT pass through to claude / the shell, e.g. ./vibe . --resume."
     exit 0
     ;;
-  claude) runmode=claude; proj="${2:-}" ;;
-  shell)  runmode=shell;  proj="${2:-}" ;;
-  *)      runmode=claude; proj="$1" ;;    # ./vibe <PROJECT>
+  claude) runmode=claude; [ $# -gt 0 ] && shift ;;   # drop the 'claude' keyword
+  shell)  runmode=shell;  [ $# -gt 0 ] && shift ;;   # drop the 'shell' keyword
+  *)      runmode=claude ;;                           # ./vibe <PROJECT> [args…]
 esac
+
+# The first non-flag token is the PROJECT; everything after it stays in "$@" and
+# is forwarded verbatim to claude / the shell (e.g. ./vibe . --resume).
+proj=""
+if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then proj="$1"; shift; fi
 
 # "vibe ." -> project is the current directory's name, assuming the last path
 # segment matches its workspace mount name (the default when mounted by basename).
 [ "$proj" = "." ] && proj="$(basename "$PWD")"
 
 # Start Claude (default) or a login shell in ~/workspace[/PROJECT]. The project
-# is passed as a positional arg (not interpolated) so names with spaces are safe.
+# and any forwarded args are passed as positional args (not interpolated) so
+# names/args with spaces are safe; the inner shell drops $1 (PROJECT) and passes
+# the rest ("$@") on to claude / bash.
 if [ "$runmode" = shell ]; then
   exec incus exec "$VM" -t --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
-    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such dir: ~/workspace/$1" >&2; exit 1; }; exec bash -l' _ "$proj"
+    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such dir: ~/workspace/$1" >&2; exit 1; }; shift; exec bash -l "$@"' _ "$proj" "$@"
 else
   exec incus exec "$VM" -t --cwd /home/vibe "${ENVFLAGS[@]}" -- runuser -u vibe -- \
-    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such project: ~/workspace/$1 (mounted? try ./vibe mounts)" >&2; exit 1; }; exec claude --dangerously-skip-permissions' _ "$proj"
+    bash -lc 'cd "$HOME/workspace/$1" 2>/dev/null || { echo "no such project: ~/workspace/$1 (mounted? try ./vibe mounts)" >&2; exit 1; }; shift; exec claude --dangerously-skip-permissions "$@"' _ "$proj" "$@"
 fi
