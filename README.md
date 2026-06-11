@@ -29,7 +29,7 @@ This setup contains all of that with three layers:
 | `vibe` | Launcher: `./vibe` (Claude auto mode) or `./vibe shell`. |
 | `guest/provision.sh` | Runs inside the VM: tooling, Claude Code, `vibe` user, then calls `harden.sh`. |
 | `guest/harden.sh` | Network policy: installs tinyproxy + the domain allowlist, points tools at it, enables the firewall. |
-| `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java, lighthouse. |
+| `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java/Maven/Gradle (repos mirrored through Nexus), lighthouse. |
 | `guest/docker.sh` | Docker engine + compose + buildx (rootful); routes daemon pulls through tinyproxy. |
 | `guest/init-firewall.sh` | The nftables rules that force all egress through tinyproxy. |
 | `guest/firewall.sh` | `vibe-firewall` control script — toggles the egress allowlist on/off. |
@@ -144,6 +144,7 @@ Beyond the base tooling (git, ripgrep, build-essential, system Python 3 / Node),
 | --- | --- | --- |
 | **Node** | `nvm` (per-user, in `/home/vibe/.nvm`) | default = Node 22; `nvm install/use <ver>` to switch (downloads from the allowlisted nodejs.org). Shadows the system Node. |
 | **Java** | `SDKMAN` (per-user, in `/home/vibe/.sdkman`) | default = latest Temurin LTS; `sdk install java <ver>-tem && sdk default java <ver>-tem` to switch. |
+| **Maven + Gradle** | `SDKMAN` (per-user) | default = latest; both resolve **every** dependency, plugin, and buildscript repo through the Nexus mirror (see below). |
 | **Chrome + Lighthouse** | `google-chrome-stable` (system) + `lighthouse` (global, nvm) | `CHROME_PATH` is preset; the setuid sandbox works for the `vibe` user. |
 
 These are wired onto `PATH` via `/etc/profile.d/vibe-tools.sh`, so they're
@@ -157,7 +158,37 @@ lighthouse http://localhost:3000 --only-categories=performance --quiet
 
 Auditing an **external** URL also requires that site's domain in the allowlist
 (Chrome routes through tinyproxy automatically). To pin versions reproducibly,
-set `NODE_DEFAULT` / `JAVA_VERSION` at the top of `guest/devtools.sh`.
+set `NODE_DEFAULT` / `JAVA_VERSION` / `MAVEN_VERSION` / `GRADLE_VERSION` at the
+top of `guest/devtools.sh`.
+
+### Java builds via Nexus
+
+The JVM ignores the `http_proxy` env vars the rest of the VM uses, and direct
+egress to public repositories is firewalled — so `guest/devtools.sh` configures
+Maven and Gradle to (1) tunnel through the tinyproxy egress proxy and (2) mirror
+**all** repository access through `nexus.example.com` (which is on the allowlist):
+
+| Tool | File | What it does |
+| --- | --- | --- |
+| Maven | `~/.m2/settings.xml` | `<proxy>` → 127.0.0.1:8888; `<mirror>` `mirrorOf=*` → the Nexus group; `<server>` creds from the env. |
+| Gradle | `~/.gradle/gradle.properties` + `~/.gradle/init.gradle` | `systemProp.*.proxy*` → the proxy; the init script replaces every project/plugin/buildscript repo with the (credentialed) Nexus group. |
+
+**Credentials:** `nexus.example.com` requires authentication. Put `NEXUS_USERNAME`
+and `NEXUS_PASSWORD` in `secrets.env` (see `secrets.env.example`); `./vibe`
+forwards them into the session, and Maven/Gradle read them from the env at build
+time — nothing is written to the VM disk. With those set, `mvn` and `gradle` work
+with the firewall on, no per-project setup:
+
+```sh
+mvn -B verify           # or:  ./mvnw …
+gradle build            # or:  ./gradlew …
+```
+
+The Nexus URL defaults to `https://nexus.example.com/repository/maven-all/`
+(override with `NEXUS_MAVEN_URL` at the top of `guest/devtools.sh`). For Gradle
+plugins, that group must proxy the Gradle Plugin Portal (`plugins.gradle.org`).
+Note: project **wrappers** (`mvnw`/`gradlew`) download their own distribution —
+point those at Nexus too, or the distribution host needs allowlisting.
 
 ## Docker (rootful)
 

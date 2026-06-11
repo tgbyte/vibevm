@@ -35,6 +35,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 ^llm-gateway\.example\.com$
 ^www\.example\.com$
 ^pa\.example\.com$
+^nexus\.example\.com$
 EOF
 
 chmod 0644 /etc/tinyproxy/allowlist
