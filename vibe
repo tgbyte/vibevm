@@ -4,7 +4,10 @@
 #   ./vibe claude [PROJECT] -> same, explicit (use if PROJECT clashes with a subcommand)
 #   ./vibe shell [PROJECT]  -> login shell in ~/workspace[/PROJECT]
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")" && pwd)"
+# Resolve symlinks so $HERE is the repo dir even when run via a PATH symlink
+# (e.g. ~/bin/vibe -> .../vibevm/vibe); otherwise secrets.env and the helper
+# scripts below wouldn't be found.
+HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 VM=vibevm
 
 ENVFLAGS=()
