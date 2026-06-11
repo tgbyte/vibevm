@@ -26,7 +26,7 @@ echo "== Installing base tooling =="
 apt-get install -y --no-install-recommends \
   ca-certificates curl git nftables ripgrep jq \
   python3 python3-venv python3-pip build-essential \
-  iproute2 dnsutils less vim nano
+  iproute2 dnsutils less vim nano btop
 
 echo "== Installing Node.js 22 + Claude Code =="
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
