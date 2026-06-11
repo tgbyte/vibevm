@@ -31,6 +31,9 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)docker\.io$
 (^|\.)docker\.com$
 (^|\.)ghcr\.io$
+^docker\.elastic\.co$
+^docker-auth\.elastic\.co$
+^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
 ^registry-mirror\.example\.com$
 ^llm-gateway\.example\.com$
 ^www\.example\.com$
