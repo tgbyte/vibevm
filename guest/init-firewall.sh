@@ -45,6 +45,17 @@ nft add chain inet vibe output '{ type filter hook output priority 0 ; policy dr
 nft add rule inet vibe output oif lo accept
 nft add rule inet vibe output ct state established,related accept
 
+# Host -> container delivery for PUBLISHED PORTS. Reaching a published port
+# (e.g. testcontainers connecting to localhost:<port>) makes docker-proxy / a
+# hairpin DNAT open the host->container leg, which leaves via the docker bridge.
+# That packet is locally generated, so it hits this OUTPUT chain and the
+# default-drop kills it — breaking port mapping whenever the firewall is on.
+# Allow output onto the docker bridges (docker0 + user networks br-*). This is
+# NOT internet egress: container egress is the FORWARD path (masqueraded out the
+# WAN by Docker's own NAT) and never traverses this OUTPUT chain.
+nft add rule inet vibe output oifname "docker0" accept
+nft add rule inet vibe output oifname "br-*" accept
+
 # DNS only to the VM's own resolvers
 for ns in "${!RES[@]}"; do
   case "$ns" in *:*) continue ;; esac   # IPv6 is disabled in the VM
