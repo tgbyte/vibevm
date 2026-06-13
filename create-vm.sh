@@ -8,7 +8,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 VM=vibevm
 IMG="images:ubuntu/26.04"
 CPU=8
-MEM=16GiB
+MEM=32GiB
 DISK=40GiB
 
 REBUILD=0; ASSUME_YES=0
