@@ -35,9 +35,15 @@ mkdir -p "$HERE/workspace"
 
 if [ "$REBUILD" = 1 ] && incus info "$VM" >/dev/null 2>&1; then
   # Capture ~/.claude to the host before wiping the VM disk, unless it's already
-  # host-backed (claude-home device attached). persist-claude.sh refuses while a
-  # claude session is running, which aborts the rebuild here — by design.
-  if ! incus config device get "$VM" claude-home source >/dev/null 2>&1; then
+  # host-backed (claude-home device attached) or the VM has no ~/.claude to rescue.
+  # The empty-check matters when a previous run was interrupted before provision.sh
+  # created the 'vibe' user: such a VM has no vibe user and an empty ~/.claude, so
+  # persist-claude.sh would die on 'install -o vibe' and abort every rebuild — yet
+  # there's nothing to capture (the host claude-home, preserved across rebuilds,
+  # already holds the real state). persist-claude.sh refuses while a claude session
+  # is running, which aborts the rebuild here — by design.
+  if ! incus config device get "$VM" claude-home source >/dev/null 2>&1 \
+     && incus exec "$VM" -- sh -c '[ -n "$(ls -A /home/vibe/.claude 2>/dev/null)" ]'; then
     echo "== ~/.claude not yet persisted — capturing it to the host first =="
     bash "$HERE/persist-claude.sh"
   fi
