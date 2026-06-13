@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Launch Claude in auto mode (or a shell) inside the vibevm sandbox.
 #   ./vibe [PROJECT]        -> claude in ~/workspace[/PROJECT]
-#   ./vibe .                -> PROJECT = current dir's name (last path segment == mount name)
+#   ./vibe .                -> PROJECT = the mount for $PWD (resolves workspaces.conf aliases)
 #   ./vibe claude [PROJECT] -> same, explicit (use if PROJECT clashes with a subcommand)
 #   ./vibe shell [PROJECT]  -> login shell in ~/workspace[/PROJECT]
 # Args after PROJECT are forwarded to claude / the shell, e.g.:
@@ -76,7 +76,7 @@ case "${1:-claude}" in
   -h|--help|help)
     echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status>]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
-    echo "  '.' uses the current directory's name as PROJECT (last path segment == mount name)."
+    echo "  '.' resolves \$PWD to its ~/workspace mount (handles workspaces.conf aliases)."
     echo "  Args after PROJECT pass through to claude / the shell, e.g. ./vibe . --resume."
     exit 0
     ;;
@@ -90,9 +90,40 @@ esac
 proj=""
 if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then proj="$1"; shift; fi
 
-# "vibe ." -> project is the current directory's name, assuming the last path
-# segment matches its workspace mount name (the default when mounted by basename).
-[ "$proj" = "." ] && proj="$(basename "$PWD")"
+# "vibe ." -> resolve the current host directory to its ~/workspace mount path.
+# The mount NAME can differ from basename "$PWD" when workspaces.conf aliases it
+# (name=/abs/path), so mirror the mapping rules in mount-workspaces.sh: match $PWD
+# against each mounted source (./workspace/* and workspaces.conf), preferring the
+# longest match, and append any path below it. Falls back to basename "$PWD".
+if [ "$proj" = "." ]; then
+  pwd_abs="$(pwd -P)"
+  best_name=""; best_src=""
+  consider() {   # $1=mount name  $2=host source path
+    local n="$1" p="${2/#\~/$HOME}"
+    p="$(cd "$p" 2>/dev/null && pwd -P)" || return 0
+    if [ "$pwd_abs" = "$p" ] || [[ "$pwd_abs" == "$p"/* ]]; then
+      [ ${#p} -gt ${#best_src} ] && { best_src="$p"; best_name="$n"; }
+    fi
+    return 0
+  }
+  if [ -d "$HERE/workspace" ]; then
+    for d in "$HERE"/workspace/*/; do [ -d "$d" ] && consider "$(basename "$d")" "$d"; done
+  fi
+  if [ -f "$HERE/workspaces.conf" ]; then
+    while IFS= read -r raw; do
+      line="${raw%%#*}"; line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
+      [ -z "$line" ] && continue
+      if [[ "$line" == *=* ]]; then consider "${line%%=*}" "${line#*=}"
+      else consider "$(basename "$line")" "$line"; fi
+    done < "$HERE/workspaces.conf"
+  fi
+  if [ -n "$best_name" ]; then
+    rel="${pwd_abs#"$best_src"}"; rel="${rel#/}"
+    proj="$best_name${rel:+/$rel}"
+  else
+    proj="$(basename "$pwd_abs")"
+  fi
+fi
 
 # Start Claude (default) or a login shell in ~/workspace[/PROJECT]. The project
 # and any forwarded args are passed as positional args (not interpolated) so
