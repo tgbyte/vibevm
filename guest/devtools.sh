@@ -13,7 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 VIBE_HOME=/home/vibe
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"   # nvm release tag
-NODE_DEFAULT="${NODE_DEFAULT:-22}"      # nvm default Node (major or full version)
+NODE_DEFAULT="${NODE_DEFAULT:-24.16.0}" # nvm default Node (major or full version)
 JAVA_VERSION="${JAVA_VERSION:-}"        # sdkman id e.g. 21.0.7-tem; empty = SDKMAN default (becomes default)
 JAVA_EXTRA_MAJORS="${JAVA_EXTRA_MAJORS:-21}"  # extra Temurin majors to also install (newest patch each); space-separated
 MAVEN_VERSION="${MAVEN_VERSION:-}"      # sdkman id e.g. 3.9.9;  empty = SDKMAN default (latest)
