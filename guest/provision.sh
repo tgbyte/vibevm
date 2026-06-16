@@ -24,7 +24,7 @@ apt-get update
 
 echo "== Installing base tooling =="
 apt-get install -y --no-install-recommends \
-  ca-certificates curl git nftables ripgrep jq \
+  ca-certificates curl git git-filter-repo nftables ripgrep jq \
   python3 python3-venv python3-pip build-essential \
   iproute2 dnsutils less vim nano btop
 

@@ -137,7 +137,7 @@ in `.claude.json` / `.credentials.json`).
 
 ## Preinstalled runtimes
 
-Beyond the base tooling (git, ripgrep, build-essential, system Python 3 / Node),
+Beyond the base tooling (git, git-filter-repo, ripgrep, build-essential, system Python 3 / Node),
 `guest/devtools.sh` installs:
 
 | Runtime | How | Notes |
