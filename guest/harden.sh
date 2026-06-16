@@ -27,10 +27,12 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)pypi\.org$
 (^|\.)pythonhosted\.org$
 (^|\.)sdkman\.io$
+^docs\.rke2\.io$
 ^dl\.google\.com$
 (^|\.)docker\.io$
 (^|\.)docker\.com$
 (^|\.)ghcr\.io$
+(^|\.)mcr\.microsoft\.com$
 ^docker\.elastic\.co$
 ^docker-auth\.elastic\.co$
 ^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
