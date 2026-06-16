@@ -25,7 +25,7 @@ apt-get update
 echo "== Installing base tooling =="
 apt-get install -y --no-install-recommends \
   ca-certificates curl git git-filter-repo nftables ripgrep jq \
-  python3 python3-venv python3-pip build-essential \
+  python3 python3-venv python3-pip python3-pil build-essential \
   iproute2 dnsutils less vim nano btop
 
 echo "== Installing Node.js 22 + Claude Code =="
