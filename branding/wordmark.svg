@@ -1,0 +1,14 @@
+<svg width="740" height="240" viewBox="0 0 740 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vibevm wordmark">
+  <!-- badge -->
+  <g transform="translate(32,40) scale(0.625)">
+    <rect x="2" y="2" width="252" height="252" rx="58" fill="#0D1117" stroke="#212B35" stroke-width="2"/>
+    <path d="M88 80 L64 80 L64 176 L88 176" fill="none" stroke="#2DD4BF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M168 80 L192 80 L192 176 L168 176" fill="none" stroke="#2DD4BF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M96 128 C106 100 118 100 128 128 S150 156 160 128" fill="none" stroke="#FF7A5C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- wordmark -->
+  <text x="232" y="150" font-family="'Liberation Mono', ui-monospace, Menlo, monospace" font-size="96" font-weight="700" letter-spacing="-2">
+    <tspan fill="#FF7A5C">vibe</tspan><tspan fill="#2DD4BF">vm</tspan>
+  </text>
+  <text x="234" y="190" font-family="'Liberation Mono', ui-monospace, Menlo, monospace" font-size="19" letter-spacing="3" fill="#8B98A5">sandboxed claude · auto mode</text>
+</svg>

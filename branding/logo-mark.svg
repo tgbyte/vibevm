@@ -1,0 +1,8 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vibevm logo mark">
+  <!-- left sandbox wall -->
+  <path d="M88 80 L64 80 L64 176 L88 176" fill="none" stroke="#2DD4BF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- right sandbox wall -->
+  <path d="M168 80 L192 80 L192 176 L168 176" fill="none" stroke="#2DD4BF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- the contained 'vibe' -->
+  <path d="M96 128 C106 100 118 100 128 128 S150 156 160 128" fill="none" stroke="#FF7A5C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

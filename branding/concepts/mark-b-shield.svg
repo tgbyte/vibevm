@@ -1,0 +1,10 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vibevm shield wave mark">
+  <!-- shield: the safety boundary -->
+  <path d="M120 32 C150 32 184 42 200 52 C200 118 186 170 120 208 C54 170 40 118 40 52 C56 42 90 32 120 32 Z"
+        fill="#0D1117" stroke="#2DD4BF" stroke-width="7" stroke-linejoin="round"/>
+  <!-- the 'vibe' wave, safely contained -->
+  <path d="M70 108 C82 84 100 84 110 108 S138 132 148 108 S172 84 178 108"
+        fill="none" stroke="#FF7A5C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- prompt cursor -->
+  <rect x="98" y="138" width="44" height="12" rx="2.5" fill="#2DD4BF"/>
+</svg>

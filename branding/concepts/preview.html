@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --ink:#0D1117; --teal:#2DD4BF; --coral:#FF7A5C; --mut:#8B98A5; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; background:#fff; color:#0D1117; width:1120px; }
+  .page { padding: 40px 48px 56px; }
+  h1 { font-size: 22px; letter-spacing:.5px; }
+  h1 .v { color: var(--coral); }
+  h1 .m { color: var(--teal); }
+  .sub { color:#5b6673; font-size:13px; margin-top:6px; }
+  .grid { display:grid; grid-template-columns: repeat(4,1fr); gap:24px; margin-top:28px; }
+  .cell { border:1px solid #e6e9ee; border-radius:16px; overflow:hidden; }
+  .cell .pane { display:flex; align-items:center; justify-content:center; padding:26px 0; }
+  .cell .dark  { background:#0D1117; }
+  .cell .light { background:#F4F6F8; border-top:1px solid #e6e9ee; }
+  .cell svg { width:112px; height:112px; }
+  .cap { text-align:center; font-size:12px; color:#5b6673; padding:10px 6px 12px; }
+  .cap b { color:#0D1117; display:block; font-size:13px; margin-bottom:2px; }
+  .wordmarks { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:30px; }
+  .wm { display:flex; align-items:center; gap:18px; padding:24px 28px; border-radius:16px; }
+  .wm.dark { background:#0D1117; }
+  .wm.light { background:#F4F6F8; border:1px solid #e6e9ee; }
+  .wm svg { width:60px; height:60px; flex:none; }
+  .wm .txt { font-size:38px; font-weight:600; letter-spacing:-.5px; }
+  .wm.dark .txt { color:#fff; }
+  .wm .v { color: var(--coral); }
+  .wm .m { color: var(--teal); }
+  .wm .tag { display:block; font-size:11px; font-weight:400; letter-spacing:1.5px; text-transform:uppercase; color:var(--mut); margin-top:2px; }
+  .section { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#9aa4b0; margin:34px 0 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1><span class="v">vibe</span><span class="m">vm</span> — logo concepts</h1>
+  <div class="sub">Safe sandbox for vibe-coding with Claude in auto mode · teal = containment/safety · coral = the “vibe”</div>
+
+  <div class="section">Marks · dark + light</div>
+  <div class="grid">
+    <div class="cell">
+      <div class="pane dark">__A__</div>
+      <div class="pane light">__A__</div>
+      <div class="cap"><b>A · Sandbox terminal</b>VM frame + window + agent prompt</div>
+    </div>
+    <div class="cell">
+      <div class="pane dark">__B__</div>
+      <div class="pane light">__B__</div>
+      <div class="cap"><b>B · Shield wave</b>safe “vibing”, contained</div>
+    </div>
+    <div class="cell">
+      <div class="pane dark">__C__</div>
+      <div class="pane light">__C__</div>
+      <div class="cap"><b>C · VM cube</b>the virtual machine, literally</div>
+    </div>
+    <div class="cell">
+      <div class="pane dark">__D__</div>
+      <div class="pane light">__D__</div>
+      <div class="cap"><b>D · Bracket monogram</b>walls enclose the vibe · favicon</div>
+    </div>
+  </div>
+
+  <div class="section">Wordmark (example lockup, mark A)</div>
+  <div class="wordmarks">
+    <div class="wm dark">
+      __A__
+      <div class="txt"><span class="v">vibe</span><span class="m">vm</span><span class="tag">sandboxed claude · auto mode</span></div>
+    </div>
+    <div class="wm light">
+      __A__
+      <div class="txt"><span class="v">vibe</span><span class="m">vm</span><span class="tag">sandboxed claude · auto mode</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

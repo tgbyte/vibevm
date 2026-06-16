@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  *{box-sizing:border-box;margin:0}
+  body{font-family:'Liberation Mono',ui-monospace,monospace;background:#fff;color:#0D1117;width:980px}
+  .page{padding:36px 44px 48px}
+  h1{font-size:20px}.h1 .v{color:#FF7A5C}.h1 .m{color:#2DD4BF}
+  .sec{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9aa4b0;margin:30px 0 14px}
+  .row{display:flex;gap:20px;align-items:stretch}
+  .box{flex:1;border:1px solid #e6e9ee;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:30px;gap:26px}
+  .dark{background:#0D1117;border-color:#0D1117}
+  .soft{background:#F4F6F8}
+  .lbl{font-size:11px;color:#7b8694;text-align:center;margin-top:8px}
+  .dark .lbl{color:#8b98a5}
+  /* favicon legibility strip */
+  .tab{display:flex;align-items:center;gap:8px;background:#e9edf1;border-radius:9px 9px 0 0;padding:8px 14px;font-size:13px;color:#3b444e}
+  .tabdark{background:#202730;color:#cdd6df}
+  .favwrap{display:flex;gap:30px;align-items:flex-end}
+  .fav{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:#7b8694}
+  img{display:block}
+</style></head><body><div class="page">
+  <h1 class="h1"><span class="v">vibe</span><span class="m">vm</span> — logo system · concept D</h1>
+
+  <div class="sec">primary mark</div>
+  <div class="row">
+    <div class="box dark"><div><img src="mark-512.png" width="128" height="128"><div class="lbl">mark · on ink</div></div></div>
+    <div class="box soft"><div><img src="mark-512.png" width="128" height="128"><div class="lbl">mark · on light</div></div></div>
+    <div class="box dark"><div><img src="icon-512.png" width="128" height="128"><div class="lbl">app badge</div></div></div>
+    <div class="box soft"><div><img src="logo-mono.svg" width="128" height="128"><div class="lbl">mono (1-color)</div></div></div>
+  </div>
+
+  <div class="sec">favicon legibility · actual pixel size</div>
+  <div class="row">
+    <div class="box soft" style="justify-content:flex-start">
+      <div class="favwrap">
+        <div class="fav"><div class="tab"><img src="favicon-16.png" width="16" height="16">vibevm</div>16</div>
+        <div class="fav"><img src="favicon-16.png" width="16" height="16">16</div>
+        <div class="fav"><img src="favicon-32.png" width="32" height="32">32</div>
+        <div class="fav"><img src="favicon-48.png" width="48" height="48">48</div>
+        <div class="fav"><img src="apple-touch-icon.png" width="64" height="64">180→64</div>
+      </div>
+    </div>
+    <div class="box dark" style="justify-content:flex-start;flex:0 0 240px">
+      <div class="favwrap">
+        <div class="fav"><div class="tab tabdark"><img src="favicon-16.png" width="16" height="16">vibevm</div><span style="color:#8b98a5">tab</span></div>
+        <div class="fav"><img src="favicon-32.png" width="32" height="32"><span style="color:#8b98a5">32</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">wordmark</div>
+  <div class="row">
+    <div class="box dark"><img src="wordmark.png" width="555" height="180"></div>
+  </div>
+  <div class="row" style="margin-top:20px">
+    <div class="box soft"><img src="wordmark.png" width="555" height="180"></div>
+  </div>
+</div></body></html>

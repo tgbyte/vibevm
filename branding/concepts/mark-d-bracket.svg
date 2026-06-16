@@ -1,0 +1,9 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vibevm bracket wave monogram">
+  <rect x="20" y="20" width="200" height="200" rx="44" fill="#0D1117"/>
+  <!-- left sandbox wall [ -->
+  <path d="M84 66 L60 66 L60 174 L84 174" fill="none" stroke="#2DD4BF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- right sandbox wall ] -->
+  <path d="M156 66 L180 66 L180 174 L156 174" fill="none" stroke="#2DD4BF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- contained vibe -->
+  <path d="M84 120 C95 96 110 96 120 120 S145 144 156 120" fill="none" stroke="#FF7A5C" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

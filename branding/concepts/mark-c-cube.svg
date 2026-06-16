@@ -1,0 +1,11 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="vibevm VM cube mark">
+  <!-- top face -->
+  <path d="M64 96 L160 96 L200 56 L104 56 Z" fill="#1C2530" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round"/>
+  <!-- right face -->
+  <path d="M160 96 L200 56 L200 152 L160 192 Z" fill="#141A22" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round"/>
+  <!-- front face -->
+  <path d="M64 96 L160 96 L160 192 L64 192 Z" fill="#0D1117" stroke="#2DD4BF" stroke-width="6" stroke-linejoin="round"/>
+  <!-- prompt on the front face -->
+  <path d="M82 126 L104 144 L82 162" fill="none" stroke="#FF7A5C" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="112" y="155" width="30" height="9" rx="2" fill="#2DD4BF"/>
+</svg>

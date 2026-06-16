@@ -1,0 +1,6 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" style="color:#0D1117" role="img" aria-label="vibevm logo, single color">
+  <!-- single-color version: set `color` (CSS) or override stroke to recolor -->
+  <path d="M88 80 L64 80 L64 176 L88 176" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M168 80 L192 80 L192 176 L168 176" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M96 128 C106 100 118 100 128 128 S150 156 160 128" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
