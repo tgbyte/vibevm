@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="branding/logo-mark.svg" width="120" alt="vibevm">
+  <img src="branding/wordmark.png" width="380" alt="vibevm — a safe sandbox for vibe-coding with Claude in auto mode">
 </p>
-<h1 align="center">vibevm</h1>
-<p align="center"><em>a safe sandbox for vibe-coding with Claude in auto mode</em></p>
 
 A throwaway **incus KVM virtual machine** (Ubuntu 26.04 LTS) where you can run
 `claude --dangerously-skip-permissions` (auto / "YOLO" mode) without putting your
