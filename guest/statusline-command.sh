@@ -108,10 +108,13 @@ fi
 
 # ── Render powerline bar ──────────────────────────────────────────────────────
 n=${#seg_colors[@]}
-out=""
+
+# vibevm mark — teal sandbox walls [ ] around a coral wave ∿ (the "vibe"),
+# matching branding/logo-mark.svg. Leads the bar so every prompt is branded.
+out=$(printf '%b' "$(fg 45 212 191)[$(fg 255 122 92)∿$(fg 45 212 191)]${RESET} ")
 
 if [ "$n" -eq 0 ]; then
-    printf "\n"
+    printf '%b\n' "$out"
     exit 0
 fi
 
