@@ -46,25 +46,66 @@ fi
 declare -A WANTDEV=()
 for n in "${!WANT[@]}"; do WANTDEV["$(devname "$n")"]=1; done
 
-# Remove stale ws-* mounts
+vm_running() { [ "$(incus info "$VM" | awk '/Status/{print $2}')" = RUNNING ]; }
+
+# Add one disk device to the VM config. On a running VM this also hot-plugs it
+# live, but Incus only wires up ~8-10 hot-plug PCI slots per boot, so a large
+# mount set overflows them ("No available PCI hotplug slots"). Exit status:
+#   0 added · 2 slots exhausted (caller re-adds it cold) · 1 other failure.
+try_add() {
+  local n="$1" out
+  if out="$(incus config device add "$VM" "$(devname "$n")" disk \
+              source="${WANT[$n]}" path="$BASE/$n" 2>&1)"; then return 0; fi
+  printf '%s\n' "$out" | grep -qi 'hotplug slot' && return 2
+  printf '%s\n' "$out" >&2; return 1
+}
+
+# Remove stale ws-* mounts (no longer wanted).
 while read -r dev; do
   [[ "$dev" == ws-* ]] || continue
   [ -z "${WANTDEV[$dev]:-}" ] && { echo "- unmount: $dev"; incus config device remove "$VM" "$dev" >/dev/null; }
 done < <(incus config device list "$VM")
 
-incus exec "$VM" -- install -d -o vibe -g vibe "$BASE"
-
-# Add / update wanted mounts
+# Work out which mounts still need attaching; drop any whose source changed.
+declare -a ADD=()
 for n in "${!WANT[@]}"; do
-  src="${WANT[$n]}"; dev="$(devname "$n")"; gpath="$BASE/$n"
-  incus exec "$VM" -- install -d -o vibe -g vibe "$gpath"
+  dev="$(devname "$n")"
   if incus config device get "$VM" "$dev" source >/dev/null 2>&1; then
-    [ "$(incus config device get "$VM" "$dev" source)" = "$src" ] && { echo "= $n  ($src)"; continue; }
+    [ "$(incus config device get "$VM" "$dev" source)" = "${WANT[$n]}" ] && { echo "= $n  (${WANT[$n]})"; continue; }
     incus config device remove "$VM" "$dev" >/dev/null
   fi
-  echo "+ mount: $n  <-  $src"
-  incus config device add "$VM" "$dev" disk source="$src" path="$gpath" >/dev/null
+  ADD+=("$n")
 done
+
+# Parent dir, owned by vibe, while the VM is up. Per-mount targets are created
+# by the incus agent on attach/boot, so cold-added mounts need no pre-made dir.
+if vm_running; then incus exec "$VM" -- install -d -o vibe -g vibe "$BASE"; fi
+
+# Attach wanted mounts. Hot-plug while the VM runs; whatever overflows the PCI
+# hot-plug slots is queued and re-added cold after a restart, which resets the
+# boot device set — the only way past Incus's per-boot slot ceiling.
+declare -a COLD=()
+for n in "${ADD[@]}"; do
+  echo "+ mount: $n  <-  ${WANT[$n]}"
+  if vm_running; then
+    incus exec "$VM" -- install -d -o vibe -g vibe "$BASE/$n"
+    try_add "$n" && rc=0 || rc=$?
+    case "$rc" in 0) ;; 2) COLD+=("$n") ;; *) exit 1 ;; esac
+  else
+    COLD+=("$n")
+  fi
+done
+
+if [ "${#COLD[@]}" -gt 0 ]; then
+  echo "  hot-plug slots full — attaching ${#COLD[@]} more cold (the VM restarts)…"
+  if vm_running; then incus stop "$VM" --timeout 60; fi
+  for n in "${COLD[@]}"; do
+    incus config device add "$VM" "$(devname "$n")" disk \
+      source="${WANT[$n]}" path="$BASE/$n" >/dev/null
+  done
+  incus start "$VM"
+  until incus exec "$VM" -- true 2>/dev/null; do sleep 2; done
+fi
 
 # Wait for hotplugged virtiofs mounts to settle, so callers see them immediately
 # and the prune below doesn't race a not-yet-mounted target.
