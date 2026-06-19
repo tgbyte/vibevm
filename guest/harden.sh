@@ -27,6 +27,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)pypi\.org$
 (^|\.)pythonhosted\.org$
 (^|\.)sdkman\.io$
+^registry\.terraform\.io$
 ^docs\.rke2\.io$
 ^dl\.google\.com$
 (^|\.)docker\.io$
