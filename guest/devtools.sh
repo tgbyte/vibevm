@@ -80,6 +80,24 @@ as_vibe '
   if [ -n "'"$GRADLE_VERSION"'" ]; then sdk install gradle "'"$GRADLE_VERSION"'"; else sdk install gradle; fi
 '
 
+echo "== OpenTofu (tofu) via the official apt repository =="
+# OpenTofu ships signed Debian packages from its Cloudsmith-backed apt repo.
+# apt metadata is served by packages.opentofu.org; the repo gpg key and the .deb
+# pool files redirect to Cloudsmith's CDN host d3fo0g5hm7lbuv.cloudfront.net —
+# all allowlisted in harden.sh. apt goes through tinyproxy (01proxy).
+apt-get install -y --no-install-recommends apt-transport-https ca-certificates gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://get.opentofu.org/opentofu.gpg -o /etc/apt/keyrings/opentofu.gpg
+curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey \
+  | gpg --no-tty --batch --yes --dearmor -o /etc/apt/keyrings/opentofu-repo.gpg
+chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg
+cat >/etc/apt/sources.list.d/opentofu.list <<'EOF'
+deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main
+EOF
+chmod a+r /etc/apt/sources.list.d/opentofu.list
+apt-get update
+apt-get install -y tofu
+
 echo "== Routing Maven/Gradle repositories through Nexus ($NEXUS_MAVEN_URL) =="
 # The JVM ignores the http_proxy env vars the rest of the VM uses, so Maven and
 # Gradle are pointed at the egress proxy explicitly; and every repository is

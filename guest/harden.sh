@@ -28,6 +28,10 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)pythonhosted\.org$
 (^|\.)sdkman\.io$
 ^registry\.terraform\.io$
+^search\.opentofu\.org$
+^registry\.opentofu\.org$
+^get\.opentofu\.org$
+^packages\.opentofu\.org$
 ^docs\.rke2\.io$
 ^dl\.google\.com$
 (^|\.)docker\.io$
@@ -37,6 +41,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 ^docker\.elastic\.co$
 ^docker-auth\.elastic\.co$
 ^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
+^d3fo0g5hm7lbuv\.cloudfront\.net$
 ^registry-mirror\.example\.com$
 ^llm-gateway\.example\.com$
 ^www\.example\.com$
