@@ -43,6 +43,7 @@ cat >/etc/tinyproxy/allowlist <<'EOF'
 ^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
 ^d3fo0g5hm7lbuv\.cloudfront\.net$
 ^registry-mirror\.example\.com$
+(^|\.)unsplash\.com$
 ^llm-gateway\.example\.com$
 ^www\.example\.com$
 ^pa\.example\.com$
