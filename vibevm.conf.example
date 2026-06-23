@@ -1,0 +1,38 @@
+# vibevm host configuration. Copy to vibevm.conf (gitignored) and uncomment what
+# you want to change. Everything here has a built-in default (see config.sh), so
+# this file is entirely optional — the repo runs unmodified without it.
+#
+#   cp vibevm.conf.example vibevm.conf && $EDITOR vibevm.conf
+#
+# Applied at build time by ./create-vm.sh (resources/versions/mirrors) and at
+# launch by ./vibe (VM name). Re-run ./create-vm.sh --rebuild after changing
+# anything the VM is provisioned with.
+
+# ── VM identity + resources ──────────────────────────────────────────────────
+# VM_NAME=vibevm
+# VM_IMAGE=images:ubuntu/26.04
+# VM_CPU=8
+# VM_MEM=32GiB
+# VM_DISK=40GiB
+
+# ── Tool version pins ────────────────────────────────────────────────────────
+# nvm release tag and the default Node it installs (major or full version).
+# NVM_VERSION=v0.40.1
+# NODE_DEFAULT=24.16.0
+# SDKMAN ids; empty = SDKMAN's latest. JAVA_EXTRA_MAJORS installs extra Temurin
+# majors (newest patch of each) alongside the default; space-separated.
+# JAVA_VERSION=
+# JAVA_EXTRA_MAJORS=21
+# MAVEN_VERSION=
+# GRADLE_VERSION=
+
+# ── Optional mirrors (empty = public sources used directly) ──────────────────
+# Route Maven/Gradle dependency resolution through a Nexus (or other) repository
+# group. Leave empty to resolve straight from Maven Central + the Gradle Plugin
+# Portal (both allowlisted by default). If you set this, add the host to
+# ./allowlist, and put any credentials in secrets.env (NEXUS_USERNAME/PASSWORD).
+# NEXUS_MAVEN_URL=https://nexus.example.com/repository/maven-all/
+
+# Docker registry pull-through mirror. Leave empty to pull from upstream
+# registries directly. If you set this, add the host to ./allowlist.
+# REGISTRY_MIRROR=https://registry-mirror.example.com

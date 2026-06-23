@@ -12,8 +12,10 @@
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
-# Registry pull-through mirror (must also be in the tinyproxy allowlist). Empty = none.
-REGISTRY_MIRROR="${REGISTRY_MIRROR:-https://registry-mirror.example.com}"
+# Optional registry pull-through mirror. Empty (default) = pull from upstream
+# registries directly. Set REGISTRY_MIRROR in vibevm.conf to route through a
+# mirror (its host must also be in ./allowlist).
+REGISTRY_MIRROR="${REGISTRY_MIRROR:-}"
 
 echo "== Installing Docker engine + compose + buildx =="
 apt-get install -y docker.io docker-compose-v2 docker-buildx \

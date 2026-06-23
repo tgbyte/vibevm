@@ -1,5 +1,7 @@
 secrets.env
 workspace/
 workspaces.conf
+vibevm.conf
+/allowlist
 claude-home/
 *.log

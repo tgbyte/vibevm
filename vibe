@@ -13,7 +13,8 @@ set -euo pipefail
 # (e.g. ~/bin/vibe -> .../vibevm/vibe); otherwise secrets.env and the helper
 # scripts below wouldn't be found.
 HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-VM=vibevm
+. "$HERE/config.sh"
+VM="$VM_NAME"
 
 ENVFLAGS=()
 # Claude keeps its config (~/.claude.json) and state under CLAUDE_CONFIG_DIR.

@@ -11,45 +11,28 @@ apt-get install -y --no-install-recommends tinyproxy
 
 echo "== Domain allowlist =="
 install -d /etc/tinyproxy
-# Add what your workflow needs (POSIX extended regex on the request host),
-# then: systemctl restart tinyproxy
-cat >/etc/tinyproxy/allowlist <<'EOF'
+# The allowlist is a HOST file (./allowlist, copied from allowlist.example),
+# pushed to /root/allowlist by create-vm.sh and installed here — so editing the
+# allowlist never means editing this script. If it's absent (harden.sh run
+# standalone on a VM that never received one), keep any existing list; failing
+# that, write a minimal bootstrap list sufficient to reach the API + core repos.
+# To change the allowlist reproducibly: edit ./allowlist on the host and re-run
+# ./create-vm.sh (it re-pushes). For a quick live tweak: edit this file in the VM
+# and `systemctl restart tinyproxy`.
+if [ -f /root/allowlist ]; then
+  install -m 0644 /root/allowlist /etc/tinyproxy/allowlist
+elif [ ! -s /etc/tinyproxy/allowlist ]; then
+  cat >/etc/tinyproxy/allowlist <<'EOF'
 (^|\.)anthropic\.com$
 (^|\.)claude\.com$
 (^|\.)github\.com$
-(^|\.)githubusercontent\.com$
-(^|\.)githubassets\.com$
+(^|\.)ubuntu\.com$
 (^|\.)npmjs\.org$
 (^|\.)npmjs\.com$
-(^|\.)nodejs\.org$
-(^|\.)nodesource\.com$
-(^|\.)ubuntu\.com$
 (^|\.)pypi\.org$
 (^|\.)pythonhosted\.org$
-(^|\.)sdkman\.io$
-^registry\.terraform\.io$
-^search\.opentofu\.org$
-^registry\.opentofu\.org$
-^get\.opentofu\.org$
-^packages\.opentofu\.org$
-^docs\.rke2\.io$
-^dl\.google\.com$
-(^|\.)docker\.io$
-(^|\.)docker\.com$
-(^|\.)ghcr\.io$
-(^|\.)mcr\.microsoft\.com$
-^docker\.elastic\.co$
-^docker-auth\.elastic\.co$
-^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
-^d3fo0g5hm7lbuv\.cloudfront\.net$
-^registry-mirror\.example\.com$
-(^|\.)unsplash\.com$
-^llm-gateway\.example\.com$
-^www\.example\.com$
-^pa\.example\.com$
-^nexus\.example\.com$
 EOF
-
+fi
 chmod 0644 /etc/tinyproxy/allowlist
 
 echo "== AppArmor: let tinyproxy read the allowlist filter file =="

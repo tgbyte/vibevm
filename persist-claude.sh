@@ -7,7 +7,8 @@
 # to the host dir (when the host dir is still empty), then attaches the mount.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-VM=vibevm
+. "$HERE/config.sh"
+VM="$VM_NAME"
 HOST_DIR="$HERE/claude-home"
 GUEST=/home/vibe/.claude
 

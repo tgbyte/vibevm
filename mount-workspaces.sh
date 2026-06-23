@@ -11,7 +11,8 @@
 #      (~ is expanded; blank lines and # comments are ignored)
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-VM=vibevm
+. "$HERE/config.sh"
+VM="$VM_NAME"
 BASE=/home/vibe/workspace
 
 incus info "$VM" >/dev/null 2>&1 || { echo "VM '$VM' not found — run ./create-vm.sh first." >&2; exit 1; }

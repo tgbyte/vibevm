@@ -29,9 +29,12 @@ This setup contains all of that with three layers:
 | `bootstrap.sh` | One-time host setup (starts incus daemon, group, init). Needs sudo. |
 | `create-vm.sh` | Launches + provisions the VM. Idempotent. |
 | `vibe` | Launcher: `./vibe` (Claude auto mode) or `./vibe shell`. |
+| `config.sh` | Shared config loader: bakes defaults, overlaid by `vibevm.conf`. Sourced by the host scripts. |
+| `vibevm.conf` | Host config — VM name/resources, tool versions, optional mirrors (gitignored; see `.example`). |
+| `allowlist` | Egress domain allowlist pushed into the VM (gitignored; see `.example`). |
 | `guest/provision.sh` | Runs inside the VM: tooling, Claude Code, `vibe` user, then calls `harden.sh`. |
 | `guest/harden.sh` | Network policy: installs tinyproxy + the domain allowlist, points tools at it, enables the firewall. |
-| `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java/Maven/Gradle (repos mirrored through Nexus), lighthouse. |
+| `guest/devtools.sh` | Developer runtimes: Chrome (headless), nvm+Node, SDKMAN+Java/Maven/Gradle (public repos, optional Nexus mirror), lighthouse. |
 | `guest/docker.sh` | Docker engine + compose + buildx (rootful); routes daemon pulls through tinyproxy. |
 | `guest/init-firewall.sh` | The nftables rules that force all egress through tinyproxy. |
 | `guest/firewall.sh` | `vibe-firewall` control script — toggles the egress allowlist on/off. |
@@ -44,13 +47,35 @@ This setup contains all of that with three layers:
 
 ```sh
 ./bootstrap.sh          # one time; sudo. Then start a NEW shell / restart Claude Code.
-./create-vm.sh          # build + provision the VM (a few minutes)
 cp secrets.env.example secrets.env && $EDITOR secrets.env   # optional: scoped API key
+cp vibevm.conf.example vibevm.conf  && $EDITOR vibevm.conf   # optional: tune VM/versions/mirrors
+./create-vm.sh          # build + provision the VM (a few minutes)
 ./vibe                  # vibe-code in auto mode
 ```
 
-Put the projects you want to work on under `~/workspace` (see below). You edit
-them on the host with your normal tools; Claude works on the same files in the VM.
+The two `cp` steps are optional — the repo runs unmodified with sensible
+defaults. Put the projects you want to work on under `~/workspace` (see below).
+You edit them on the host with your normal tools; Claude works on the same files
+in the VM.
+
+### Configuration (`vibevm.conf`)
+
+Host-side settings live in `vibevm.conf` (copy from `vibevm.conf.example`,
+gitignored). Anything you leave unset falls back to the default in `config.sh`:
+
+| Setting | Default | What it controls |
+| --- | --- | --- |
+| `VM_NAME` | `vibevm` | incus instance name (all the host scripts target it). |
+| `VM_IMAGE` | `images:ubuntu/26.04` | Base image. |
+| `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `32GiB` / `40GiB` | VM resource limits. |
+| `NODE_DEFAULT` / `NVM_VERSION` | `24.16.0` / `v0.40.1` | nvm's default Node and the nvm release. |
+| `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` / `GRADLE_VERSION` | SDKMAN latest / `21` / latest / latest | SDKMAN tool versions. |
+| `NEXUS_MAVEN_URL` | *(empty)* | Optional Maven/Gradle mirror (see below). |
+| `REGISTRY_MIRROR` | *(empty)* | Optional Docker registry pull-through mirror. |
+
+The egress allowlist is configured separately in `./allowlist` (see
+[Adjusting the network allowlist](#adjusting-the-network-allowlist)). Re-run
+`./create-vm.sh --rebuild` after changing anything the VM is provisioned with.
 
 ### Mounting projects (`~/workspace`)
 
@@ -144,9 +169,9 @@ Beyond the base tooling (git, git-filter-repo, ripgrep, build-essential, system 
 
 | Runtime | How | Notes |
 | --- | --- | --- |
-| **Node** | `nvm` (per-user, in `/home/vibe/.nvm`) | default = Node 22; `nvm install/use <ver>` to switch (downloads from the allowlisted nodejs.org). Shadows the system Node. |
+| **Node** | `nvm` (per-user, in `/home/vibe/.nvm`) | default = Node 24 (`NODE_DEFAULT`); `nvm install/use <ver>` to switch (downloads from the allowlisted nodejs.org). Shadows the system Node. |
 | **Java** | `SDKMAN` (per-user, in `/home/vibe/.sdkman`) | default = latest Temurin; **JDK 21** also installed. `sdk use java 21.0.x-tem` (this shell) or `sdk default java <ver>-tem` (global) to switch; `JAVA_EXTRA_MAJORS` adds more. |
-| **Maven + Gradle** | `SDKMAN` (per-user) | default = latest; both resolve **every** dependency, plugin, and buildscript repo through the Nexus mirror (see below). |
+| **Maven + Gradle** | `SDKMAN` (per-user) | default = latest; resolve from public Maven Central + the Gradle Plugin Portal, or through a Nexus mirror if configured (see below). |
 | **Chrome + Lighthouse** | `google-chrome-stable` (system) + `lighthouse` (global, nvm) | `CHROME_PATH` is preset; the setuid sandbox works for the `vibe` user. |
 
 These are wired onto `PATH` via `/etc/profile.d/vibe-tools.sh`, so they're
@@ -161,36 +186,43 @@ lighthouse http://localhost:3000 --only-categories=performance --quiet
 Auditing an **external** URL also requires that site's domain in the allowlist
 (Chrome routes through tinyproxy automatically). To pin versions reproducibly,
 set `NODE_DEFAULT` / `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` /
-`GRADLE_VERSION` at the top of `guest/devtools.sh`.
+`GRADLE_VERSION` in `vibevm.conf`.
 
-### Java builds via Nexus
+### Java builds (default public, optional Nexus mirror)
 
-The JVM ignores the `http_proxy` env vars the rest of the VM uses, and direct
-egress to public repositories is firewalled — so `guest/devtools.sh` configures
-Maven and Gradle to (1) tunnel through the tinyproxy egress proxy and (2) mirror
-**all** repository access through `nexus.example.com` (which is on the allowlist):
-
-| Tool | File | What it does |
-| --- | --- | --- |
-| Maven | `~/.m2/settings.xml` | `<proxy>` → 127.0.0.1:8888; `<mirror>` `mirrorOf=*` → the Nexus group; `<server>` creds from the env. |
-| Gradle | `~/.gradle/gradle.properties` + `~/.gradle/init.gradle` | `systemProp.*.proxy*` → the proxy; the init script replaces every project/plugin/buildscript repo with the (credentialed) Nexus group. |
-
-**Credentials:** `nexus.example.com` requires authentication. Put `NEXUS_USERNAME`
-and `NEXUS_PASSWORD` in `secrets.env` (see `secrets.env.example`); `./vibe`
-forwards them into the session, and Maven/Gradle read them from the env at build
-time — nothing is written to the VM disk. With those set, `mvn` and `gradle` work
-with the firewall on, no per-project setup:
+The JVM ignores the `http_proxy` env vars the rest of the VM uses, so
+`guest/devtools.sh` points Maven and Gradle at the tinyproxy egress proxy
+explicitly. **By default they resolve from the public repositories** — Maven
+Central (`repo.maven.apache.org`) and the Gradle Plugin Portal
+(`plugins.gradle.org`), both on the default allowlist — so `mvn` and `gradle`
+work with the firewall on, no per-project setup:
 
 ```sh
 mvn -B verify           # or:  ./mvnw …
 gradle build            # or:  ./gradlew …
 ```
 
-The Nexus URL defaults to `https://nexus.example.com/repository/maven-all/`
-(override with `NEXUS_MAVEN_URL` at the top of `guest/devtools.sh`). For Gradle
-plugins, that group must proxy the Gradle Plugin Portal (`plugins.gradle.org`).
-Note: project **wrappers** (`mvnw`/`gradlew`) download their own distribution —
-point those at Nexus too, or the distribution host needs allowlisting.
+**Optional Nexus mirror.** In a locked-down network you may prefer to mirror
+**all** repository access through a single repository group (so builds never need
+direct egress to public repos). Set `NEXUS_MAVEN_URL` in `vibevm.conf` and add its
+host to `./allowlist`:
+
+```sh
+# vibevm.conf
+NEXUS_MAVEN_URL=https://nexus.example.com/repository/maven-all/
+```
+
+| Tool | File | What it does (when a mirror is set) |
+| --- | --- | --- |
+| Maven | `~/.m2/settings.xml` | `<proxy>` → 127.0.0.1:8888; `<mirror>` `mirrorOf=*` → the mirror; `<server>` creds from the env. |
+| Gradle | `~/.gradle/gradle.properties` + `~/.gradle/init.gradle` | `systemProp.*.proxy*` → the proxy; the init script replaces every project/plugin/buildscript repo with the (credentialed) mirror. |
+
+If the mirror needs authentication, put `NEXUS_USERNAME` / `NEXUS_PASSWORD` in
+`secrets.env`; `./vibe` forwards them into the session and Maven/Gradle read them
+from the env at build time — nothing is written to the VM disk. For Gradle
+plugins, the group must proxy the Gradle Plugin Portal. Note: project
+**wrappers** (`mvnw`/`gradlew`) download their own distribution — point those at
+the mirror too, or the distribution host (`*.gradle.org`) needs allowlisting.
 
 ## Docker (rootful)
 
@@ -215,25 +247,32 @@ rootless Docker.)
 ## Adjusting the network allowlist
 
 Egress is default-deny and allowlisted **by domain** (robust to CDN IP changes).
-To allow more domains, edit the regex list (POSIX ERE, matched against the
-request host) — either `/etc/tinyproxy/allowlist` in the VM directly:
+The list lives in `./allowlist` on the host — one POSIX ERE per line, matched
+against the request host (copy from `allowlist.example`; `create-vm.sh` does this
+for you on first run). `create-vm.sh` pushes it into the VM as
+`/etc/tinyproxy/allowlist`.
+
+To add domains reproducibly, edit `./allowlist` and re-apply (this survives
+rebuilds, since the host file is the source of truth):
+
+```sh
+$EDITOR allowlist
+incus file push allowlist vibevm/root/allowlist --mode 0644
+incus exec vibevm -- bash /usr/local/bin/harden.sh   # re-installs the list + restarts tinyproxy
+```
+
+For a quick one-off tweak you can instead edit the live copy in the VM directly
+(lost on rebuild):
 
 ```sh
 incus exec vibevm -- nano /etc/tinyproxy/allowlist
 incus exec vibevm -- systemctl restart tinyproxy
 ```
 
-…or, to keep it reproducible across rebuilds, edit the allowlist block in
-`guest/harden.sh` and re-apply:
-
-```sh
-incus file push guest/harden.sh vibevm/usr/local/bin/harden.sh --mode 0755
-incus exec vibevm -- bash /usr/local/bin/harden.sh
-```
-
 Inspect the live policy: `incus exec vibevm -- nft list ruleset` and
 `incus exec vibevm -- cat /etc/tinyproxy/allowlist`. Denied requests show up as
 `403 Filtered`/`CONNECT tunnel failed` to the client and in tinyproxy's log.
+(Replace `vibevm` with your `VM_NAME` if you changed it.)
 
 ## Turning the egress firewall off
 

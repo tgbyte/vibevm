@@ -4,12 +4,13 @@
 # pass --rebuild to delete the existing VM and recreate it from scratch.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
+. "$HERE/config.sh"
 
-VM=vibevm
-IMG="images:ubuntu/26.04"
-CPU=8
-MEM=32GiB
-DISK=40GiB
+VM="$VM_NAME"
+IMG="$VM_IMAGE"
+CPU="$VM_CPU"
+MEM="$VM_MEM"
+DISK="$VM_DISK"
 
 REBUILD=0; ASSUME_YES=0
 for arg in "$@"; do
@@ -74,6 +75,11 @@ until incus exec "$VM" -- true 2>/dev/null; do sleep 2; done
 echo "== Waiting for network/DNS =="
 until incus exec "$VM" -- getent hosts archive.ubuntu.com >/dev/null 2>&1; do sleep 2; done
 
+# The egress allowlist is a host file pushed into the VM (harden.sh installs it as
+# /etc/tinyproxy/allowlist). Seed the gitignored working copy from the example on
+# first run so a fresh clone has a non-empty list (default-deny needs one).
+[ -f "$HERE/allowlist" ] || cp "$HERE/allowlist.example" "$HERE/allowlist"
+
 echo "== Pushing provisioning scripts =="
 incus file push "$HERE/guest/provision.sh"     "$VM/root/provision.sh"              --mode 0755
 incus file push "$HERE/guest/harden.sh"        "$VM/usr/local/bin/harden.sh"        --mode 0755
@@ -82,9 +88,18 @@ incus file push "$HERE/guest/devtools.sh"      "$VM/usr/local/bin/devtools.sh"  
 incus file push "$HERE/guest/docker.sh"        "$VM/usr/local/bin/docker.sh"        --mode 0755
 incus file push "$HERE/guest/init-firewall.sh" "$VM/usr/local/bin/init-firewall.sh" --mode 0755
 incus file push "$HERE/guest/firewall.sh"      "$VM/usr/local/sbin/vibe-firewall"   --mode 0755
+incus file push "$HERE/allowlist"              "$VM/root/allowlist"                 --mode 0644
 
 echo "== Provisioning (installs tooling, creates vibe user, enables firewall) =="
-incus exec "$VM" --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" -- bash /root/provision.sh
+# Forward the configured build knobs (from config.sh / vibevm.conf) so devtools.sh
+# and docker.sh — run as children of provision.sh — see them. Only non-empty ones
+# are passed, so each installer falls back to its own default when unset.
+PROV_ENV=(--env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)")
+for k in NVM_VERSION NODE_DEFAULT JAVA_VERSION JAVA_EXTRA_MAJORS MAVEN_VERSION \
+         GRADLE_VERSION NEXUS_MAVEN_URL REGISTRY_MIRROR; do
+  [ -n "${!k:-}" ] && PROV_ENV+=(--env "$k=${!k}")
+done
+incus exec "$VM" "${PROV_ENV[@]}" -- bash /root/provision.sh
 
 echo "== Mounting workspace directories (virtiofs) =="
 bash "$HERE/mount-workspaces.sh"

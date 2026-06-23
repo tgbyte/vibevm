@@ -1,0 +1,64 @@
+# vibevm egress allowlist — the domains the VM may reach with the firewall on.
+#
+# Copy to ./allowlist (gitignored) and add whatever your workflow needs;
+# ./create-vm.sh copies this file to ./allowlist automatically if it's missing,
+# then pushes it into the VM as /etc/tinyproxy/allowlist.
+#
+# One POSIX extended regex (ERE) per line, matched against the request HOST
+# (case-insensitive). Blank lines and #comments are ignored by tinyproxy.
+#   (^|\.)example\.com$   matches example.com and any subdomain
+#   ^repo\.example\.com$  matches exactly that host
+#
+# After editing ./allowlist, re-run ./create-vm.sh (it re-pushes), or edit live:
+#   incus exec <VM_NAME> -- nano /etc/tinyproxy/allowlist
+#   incus exec <VM_NAME> -- systemctl restart tinyproxy
+
+# ── Anthropic / Claude ───────────────────────────────────────────────────────
+(^|\.)anthropic\.com$
+(^|\.)claude\.com$
+
+# ── Source hosting ───────────────────────────────────────────────────────────
+(^|\.)github\.com$
+(^|\.)githubusercontent\.com$
+(^|\.)githubassets\.com$
+
+# ── Language package registries ──────────────────────────────────────────────
+(^|\.)npmjs\.org$
+(^|\.)npmjs\.com$
+(^|\.)nodejs\.org$
+(^|\.)nodesource\.com$
+(^|\.)pypi\.org$
+(^|\.)pythonhosted\.org$
+(^|\.)sdkman\.io$
+
+# ── OS packages ──────────────────────────────────────────────────────────────
+(^|\.)ubuntu\.com$
+
+# ── JVM build repos (public Maven Central + Gradle Plugin Portal/distributions) ─
+^repo\.maven\.apache\.org$
+^repo1\.maven\.org$
+(^|\.)gradle\.org$
+
+# ── Infra tooling (Terraform / OpenTofu / RKE2) ──────────────────────────────
+^registry\.terraform\.io$
+^search\.opentofu\.org$
+^registry\.opentofu\.org$
+^get\.opentofu\.org$
+^packages\.opentofu\.org$
+^d3fo0g5hm7lbuv\.cloudfront\.net$
+^docs\.rke2\.io$
+
+# ── Chrome (Lighthouse) ──────────────────────────────────────────────────────
+^dl\.google\.com$
+
+# ── Container registries ─────────────────────────────────────────────────────
+(^|\.)docker\.io$
+(^|\.)docker\.com$
+(^|\.)ghcr\.io$
+(^|\.)mcr\.microsoft\.com$
+^docker\.elastic\.co$
+^docker-auth\.elastic\.co$
+^docker-registry-production\.[^.]+\.r2\.cloudflarestorage\.com$
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+(^|\.)unsplash\.com$

@@ -8,7 +8,8 @@
 # as-is (used by create-vm.sh).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-VM=vibevm
+. "$HERE/config.sh"
+VM="$VM_NAME"
 SRC="$HERE/guest/statusline-command.sh"
 HOST_SL="$HOME/.claude/statusline-command.sh"
 

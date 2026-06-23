@@ -3,7 +3,7 @@
 #   - Google Chrome (headless) for Lighthouse
 #   - nvm + a default Node LTS (per-user, in /home/vibe)
 #   - SDKMAN + a default Temurin JDK, Maven and Gradle (per-user)
-#   - Maven/Gradle wired to resolve every dependency through the Nexus mirror
+#   - Maven/Gradle pointed at the egress proxy; optionally mirrored via Nexus
 #   - lighthouse (global, via nvm's npm)
 #
 # Downloads go DIRECT during the first provision (firewall not up yet), or
@@ -18,9 +18,10 @@ JAVA_VERSION="${JAVA_VERSION:-}"        # sdkman id e.g. 21.0.7-tem; empty = SDK
 JAVA_EXTRA_MAJORS="${JAVA_EXTRA_MAJORS:-21}"  # extra Temurin majors to also install (newest patch each); space-separated
 MAVEN_VERSION="${MAVEN_VERSION:-}"      # sdkman id e.g. 3.9.9;  empty = SDKMAN default (latest)
 GRADLE_VERSION="${GRADLE_VERSION:-}"    # sdkman id e.g. 8.10;   empty = SDKMAN default (latest)
-# Every Maven/Gradle repository request is mirrored through this Nexus group, so
-# builds never need direct egress to Maven Central / the Gradle Plugin Portal.
-NEXUS_MAVEN_URL="${NEXUS_MAVEN_URL:-https://nexus.example.com/repository/maven-all/}"
+# Optional: mirror every Maven/Gradle repository request through this Nexus group
+# so builds never need direct egress to Maven Central / the Gradle Plugin Portal.
+# Empty (default) = resolve from the public repos directly (allowlisted).
+NEXUS_MAVEN_URL="${NEXUS_MAVEN_URL:-}"
 
 # Route installs through tinyproxy iff it's already active (hardened VM).
 if systemctl is-active --quiet tinyproxy; then
@@ -98,28 +99,46 @@ chmod a+r /etc/apt/sources.list.d/opentofu.list
 apt-get update
 apt-get install -y tofu
 
-echo "== Routing Maven/Gradle repositories through Nexus ($NEXUS_MAVEN_URL) =="
 # The JVM ignores the http_proxy env vars the rest of the VM uses, so Maven and
-# Gradle are pointed at the egress proxy explicitly; and every repository is
-# mirrored to the Nexus group so resolution never needs direct egress.
+# Gradle are pointed at the egress proxy explicitly. By default they resolve from
+# the public repos (Maven Central + the Gradle Plugin Portal, both allowlisted);
+# set NEXUS_MAVEN_URL (in vibevm.conf) to mirror every repository through a Nexus
+# group instead — useful in locked-down networks. Its host must be in ./allowlist,
+# and credentials (if any) come from the session env (NEXUS_USERNAME/PASSWORD,
+# forwarded from host secrets.env by ./vibe), never written to the VM disk.
 install -d -o vibe -g vibe "$VIBE_HOME/.m2" "$VIBE_HOME/.gradle"
+
+# Optional Nexus mirror fragments — empty unless NEXUS_MAVEN_URL is set.
+mvn_servers=""; mvn_mirrors=""
+if [ -n "$NEXUS_MAVEN_URL" ]; then
+  echo "== Mirroring Maven/Gradle repositories through Nexus ($NEXUS_MAVEN_URL) =="
+  mvn_servers='  <servers>
+    <server>
+      <id>nexus</id>
+      <username>${env.NEXUS_USERNAME}</username>
+      <password>${env.NEXUS_PASSWORD}</password>
+    </server>
+  </servers>'
+  mvn_mirrors="  <mirrors>
+    <mirror>
+      <id>nexus</id>
+      <name>nexus mirror</name>
+      <mirrorOf>*</mirrorOf>
+      <url>$NEXUS_MAVEN_URL</url>
+    </mirror>
+  </mirrors>"
+else
+  echo "== Maven/Gradle: resolving from public repos directly (no Nexus mirror) =="
+fi
 
 cat >"$VIBE_HOME/.m2/settings.xml" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <!-- vibevm: tunnel outbound requests through the egress proxy and mirror every
-       repository to Nexus. Credentials are read from the session env (forwarded
-       from host secrets.env by ./vibe), so no secret is written to the VM disk.
-       nexus.example.com requires auth — set NEXUS_USERNAME / NEXUS_PASSWORD. -->
-  <servers>
-    <server>
-      <id>nexus</id>
-      <username>\${env.NEXUS_USERNAME}</username>
-      <password>\${env.NEXUS_PASSWORD}</password>
-    </server>
-  </servers>
+  <!-- vibevm: tunnel outbound requests through the egress proxy. With a Nexus
+       mirror configured, all repositories are also mirrored through it. -->
+$mvn_servers
   <proxies>
     <proxy>
       <id>egress</id>
@@ -130,21 +149,14 @@ cat >"$VIBE_HOME/.m2/settings.xml" <<EOF
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
   </proxies>
-  <mirrors>
-    <mirror>
-      <id>nexus</id>
-      <name>nexus.example.com</name>
-      <mirrorOf>*</mirrorOf>
-      <url>$NEXUS_MAVEN_URL</url>
-    </mirror>
-  </mirrors>
+$mvn_mirrors
 </settings>
 EOF
 
 cat >"$VIBE_HOME/.gradle/gradle.properties" <<'EOF'
 # vibevm: tunnel Gradle's outbound HTTP(S) through the egress proxy (the JVM
-# ignores the http_proxy env vars the rest of the VM uses). Repositories are
-# pinned to Nexus by ~/.gradle/init.gradle.
+# ignores the http_proxy env vars the rest of the VM uses). With a Nexus mirror
+# configured, repositories are additionally pinned by ~/.gradle/init.gradle.
 systemProp.http.proxyHost=127.0.0.1
 systemProp.http.proxyPort=8888
 systemProp.https.proxyHost=127.0.0.1
@@ -153,12 +165,13 @@ systemProp.http.nonProxyHosts=localhost|127.0.0.1
 systemProp.https.nonProxyHosts=localhost|127.0.0.1
 EOF
 
-cat >"$VIBE_HOME/.gradle/init.gradle" <<EOF
+if [ -n "$NEXUS_MAVEN_URL" ]; then
+  cat >"$VIBE_HOME/.gradle/init.gradle" <<EOF
 // vibevm: force all Gradle dependency, plugin, and buildscript resolution
 // through the Nexus mirror. Direct egress to other repositories is firewalled,
 // so every declared repository is replaced with Nexus. Credentials come from the
-// session env (forwarded from host secrets.env by ./vibe) — nexus.example.com
-// requires auth, so set NEXUS_USERNAME / NEXUS_PASSWORD.
+// session env (forwarded from host secrets.env by ./vibe) — set
+// NEXUS_USERNAME / NEXUS_PASSWORD if the mirror requires auth.
 def nexus = '$NEXUS_MAVEN_URL'
 
 // Stored on the script binding (no 'def') so the deferred closures below see it.
@@ -185,10 +198,13 @@ gradle.allprojects { project ->
     pinToNexus(project.repositories)
 }
 EOF
+else
+  # No mirror: don't pin repositories — let projects use their declared repos.
+  rm -f "$VIBE_HOME/.gradle/init.gradle"
+fi
 
-chown vibe:vibe "$VIBE_HOME/.m2/settings.xml" \
-                "$VIBE_HOME/.gradle/gradle.properties" \
-                "$VIBE_HOME/.gradle/init.gradle"
+chown vibe:vibe "$VIBE_HOME/.m2/settings.xml" "$VIBE_HOME/.gradle/gradle.properties"
+[ -f "$VIBE_HOME/.gradle/init.gradle" ] && chown vibe:vibe "$VIBE_HOME/.gradle/init.gradle"
 
 echo "== Login-shell env (node/java/maven/gradle/chrome on PATH for every session) =="
 cat >/etc/profile.d/vibe-tools.sh <<EOF
