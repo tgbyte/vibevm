@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Claude Code status line — Powerline style matching Starship Gruvbox Rainbow config
-# Segment colors from starship.toml:
-#   opening cap : #9A348E (purple)
-#   directory   : #DA627D (pink)
-#   git branch  : #FCA17D (orange)
-#   model       : #86BBD8 (blue)
-#   kubernetes  : #06969A (teal)
-#   context %   : #33658A (dark blue)
+# Claude Code status line — vibevm brand (minimal).
+# The [∿] mark, then accent-colored segments (no backgrounds) joined by muted
+# dots. Palette from branding/README.md:
+#   Teal  #2DD4BF — the walls / location (where you are)
+#   Coral #FF7A5C — the wave, the "vibe" / activity
+#   Muted #8B98A5 — secondary text + separators
+#   Light #E6EDF3 — the model name
 
 input=$(cat)
 
@@ -36,107 +35,43 @@ if command -v kubectl >/dev/null 2>&1; then
     k8s_ctx=$(kubectl config current-context 2>/dev/null || true)
 fi
 
-# ── ANSI helpers ──────────────────────────────────────────────────────────────
+# ── Brand palette (true-color escapes; emitted once via printf '%b') ────────────
 RESET='\033[0m'
-# Background (true-color)
-bg() { printf '\033[48;2;%d;%d;%dm' "$1" "$2" "$3"; }
-# Foreground (true-color)
-fg() { printf '\033[38;2;%d;%d;%dm' "$1" "$2" "$3"; }
-# White foreground for segment text
-FG_WHITE=$(fg 248 248 248)
-# Powerline glyphs
-SEP=$''      # filled right-arrow
-OPEN=$''     # left half-circle  (opening cap)
-CLOSE=$''    # right half-circle (closing cap)
+TEAL='\033[38;2;45;212;191m'     # walls / location
+CORAL='\033[38;2;255;122;92m'    # the "vibe" / activity
+MUTED='\033[38;2;139;152;165m'   # secondary / separators
+LIGHT='\033[38;2;230;237;243m'   # model
 
-# Segment color components (R G B)
-C_PURPLE=(154  52 142)
-C_PINK=(218  98 125)
-C_ORANGE=(252 161 125)
-C_BLUE=(134 187 216)
-C_TEAL=(  6 150 154)
-C_DBLUE=( 51 101 138)
-C_GOLD=(218 165  32)
+# ── vibevm mark — [∿]: teal sandbox walls around a coral wave (the "vibe") ──────
+mark="${TEAL}[${CORAL}∿${TEAL}]${RESET}"
 
-# ── Collect active segments ───────────────────────────────────────────────────
-# Each entry: "R G B|text"
-seg_colors=()
-seg_texts=()
+# ── Collect active segments (accent-colored text, no backgrounds) ───────────────
+seg=()
+seg+=("${TEAL}${short_cwd}${RESET}")                          # directory  (teal)
+[ -n "$git_branch" ] && seg+=("${CORAL}${git_branch}${RESET}")   # branch (coral)
+[ -n "$model" ]      && seg+=("${LIGHT}${model}${RESET}")        # model  (light)
+[ -n "$k8s_ctx" ]    && seg+=("${TEAL}☸ ${k8s_ctx}${RESET}")     # k8s    (teal)
 
-# 1. Directory (always present)
-seg_colors+=("${C_PINK[*]}")
-seg_texts+=(" $short_cwd ")
-
-# 2. Git branch (conditional)
-if [ -n "$git_branch" ]; then
-    seg_colors+=("${C_ORANGE[*]}")
-    seg_texts+=("  $git_branch ")
-fi
-
-# 3. Model name (conditional)
-if [ -n "$model" ]; then
-    seg_colors+=("${C_BLUE[*]}")
-    seg_texts+=("  $model ")
-fi
-
-# 4. Kubernetes context (conditional)
-if [ -n "$k8s_ctx" ]; then
-    seg_colors+=("${C_TEAL[*]}")
-    seg_texts+=(" ☸ $k8s_ctx ")
-fi
-
-# 5. Context window usage (conditional)
 if [ -n "$used_pct" ]; then
     used_int=$(printf '%.0f' "$used_pct")
-    seg_colors+=("${C_DBLUE[*]}")
-    seg_texts+=(" ctx:${used_int}% ")
+    seg+=("${MUTED}ctx:${used_int}%${RESET}")                    # context window (muted)
 fi
 
-# 6. Rate limits (5h / 7d), conditional
 if [ -n "$limit_5h" ] || [ -n "$limit_7d" ]; then
     joined=""
-    if [ -n "$limit_5h" ]; then
-        joined=$(LC_ALL=C printf '5h:%.0f%%' "$limit_5h")
-    fi
+    [ -n "$limit_5h" ] && joined=$(LC_ALL=C printf '5h:%.0f%%' "$limit_5h")
     if [ -n "$limit_7d" ]; then
         rest=$(LC_ALL=C printf '7d:%.0f%%' "$limit_7d")
         joined="${joined:+$joined / }$rest"
     fi
-    seg_colors+=("${C_GOLD[*]}")
-    seg_texts+=(" ${joined} ")
+    seg+=("${CORAL}${joined}${RESET}")                           # rate limits (coral)
 fi
 
-# ── Render powerline bar ──────────────────────────────────────────────────────
-n=${#seg_colors[@]}
-
-# vibevm mark — teal sandbox walls [ ] around a coral wave ∿ (the "vibe"),
-# matching branding/logo-mark.svg. Leads the bar so every prompt is branded.
-out=$(printf '%b' "$(fg 45 212 191)[$(fg 255 122 92)∿$(fg 45 212 191)]${RESET} ")
-
-if [ "$n" -eq 0 ]; then
-    printf '%b\n' "$out"
-    exit 0
-fi
-
-# Opening half-circle: fg=purple, no background
-read -r pr pg pb <<< "${C_PURPLE[*]}"
-read -r r0 g0 b0 <<< "${seg_colors[0]}"
-out+=$(printf '%b' "$(fg "$pr" "$pg" "$pb")$(bg "$r0" "$g0" "$b0")${OPEN}")
-
-for (( i=0; i<n; i++ )); do
-    read -r ri gi bi <<< "${seg_colors[$i]}"
-    # Segment text on its background
-    out+=$(printf '%b' "$(bg "$ri" "$gi" "$bi")${FG_WHITE}${seg_texts[$i]}")
-
-    if [ $((i+1)) -lt "$n" ]; then
-        # Transition arrow: fg=current bg, bg=next bg
-        read -r rn gn bn <<< "${seg_colors[$((i+1))]}"
-        out+=$(printf '%b' "$(fg "$ri" "$gi" "$bi")$(bg "$rn" "$gn" "$bn")${SEP}")
-    fi
+# ── Render: mark + segments joined by muted dots ────────────────────────────────
+out="$mark  "
+for i in "${!seg[@]}"; do
+    [ "$i" -gt 0 ] && out+=" ${MUTED}·${RESET} "
+    out+="${seg[$i]}"
 done
-
-# Closing half-circle: fg=last segment color, no background
-read -r rl gl bl <<< "${seg_colors[$((n-1))]}"
-out+=$(printf '%b' "${RESET}$(fg "$rl" "$gl" "$bl")${RESET}${CLOSE}${RESET}")
 
 printf '%b\n' "$out"
