@@ -96,7 +96,7 @@ echo "== Provisioning (installs tooling, creates vibe user, enables firewall) ==
 # are passed, so each installer falls back to its own default when unset.
 PROV_ENV=(--env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)")
 for k in NVM_VERSION NODE_DEFAULT JAVA_VERSION JAVA_EXTRA_MAJORS MAVEN_VERSION \
-         GRADLE_VERSION NEXUS_MAVEN_URL REGISTRY_MIRROR; do
+         GRADLE_VERSION NEXUS_MAVEN_URL REGISTRY_MIRROR APT_PACKAGES; do
   [ -n "${!k:-}" ] && PROV_ENV+=(--env "$k=${!k}")
 done
 incus exec "$VM" "${PROV_ENV[@]}" -- bash /root/provision.sh

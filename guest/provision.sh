@@ -8,6 +8,11 @@ export DEBIAN_FRONTEND=noninteractive
 
 HOST_UID="${HOST_UID:-1000}"
 HOST_GID="${HOST_GID:-1000}"
+# Configurable dev packages (forwarded from config.sh / vibevm.conf by
+# create-vm.sh). The essential core below is always installed regardless; this
+# list is the conveniences on top — extend or trim it. Keep in sync with the
+# default in config.sh.
+APT_PACKAGES="${APT_PACKAGES:-git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop}"
 
 echo "== Disabling IPv6 (so the IPv4 egress allowlist is total) =="
 cat >/etc/sysctl.d/99-disable-ipv6.conf <<'EOF'
@@ -22,11 +27,18 @@ apt-get install -y --no-install-recommends software-properties-common
 add-apt-repository -y universe || true
 apt-get update
 
-echo "== Installing base tooling =="
-apt-get install -y --no-install-recommends \
-  ca-certificates curl git git-filter-repo nftables ripgrep jq \
-  python3 python3-venv python3-pip python3-pil build-essential \
-  iproute2 dnsutils less vim nano btop
+echo "== Installing essential tooling (required; always installed) =="
+# What the VM needs to function: TLS roots, downloads (curl is used throughout
+# provisioning), git for commits, nftables for the firewall, jq for the status
+# line. These are not configurable so a trimmed APT_PACKAGES can't break the VM.
+apt-get install -y --no-install-recommends ca-certificates curl git nftables jq
+
+echo "== Installing configurable dev packages (APT_PACKAGES) =="
+echo "   packages: ${APT_PACKAGES:-(none)}"
+if [ -n "$APT_PACKAGES" ]; then
+  # shellcheck disable=SC2086  # intentional word-splitting of the package list
+  apt-get install -y --no-install-recommends $APT_PACKAGES
+fi
 
 echo "== Installing Node.js 22 + Claude Code =="
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -

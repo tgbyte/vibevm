@@ -33,6 +33,11 @@ fi
 : "${MAVEN_VERSION:=}"
 : "${GRADLE_VERSION:=}"
 
+# Base apt packages installed in the VM (space-separated dev tooling). An
+# essential core (ca-certificates curl git nftables jq) is always installed by
+# provision.sh regardless of this list, so trimming it can't break the VM.
+: "${APT_PACKAGES:=git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop}"
+
 # Optional mirrors. Empty = use public sources directly (Maven Central + Gradle
 # Plugin Portal for the JVM, upstream registries for Docker). Set these to a
 # private mirror to route through it — and add the mirror's host to ./allowlist.

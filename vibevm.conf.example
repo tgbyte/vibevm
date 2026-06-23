@@ -30,6 +30,12 @@
 # MAVEN_VERSION=
 # GRADLE_VERSION=
 
+# ── Base apt packages ────────────────────────────────────────────────────────
+# Space-separated dev tooling installed in the VM. An essential core
+# (ca-certificates curl git nftables jq) is always installed regardless, so you
+# can freely trim this. Add what you need (e.g. golang-go shellcheck postgresql-client).
+# APT_PACKAGES="git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop"
+
 # ── Optional mirrors (empty = public sources used directly) ──────────────────
 # Route Maven/Gradle dependency resolution through a Nexus (or other) repository
 # group. Leave empty to resolve straight from Maven Central + the Gradle Plugin

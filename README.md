@@ -70,6 +70,7 @@ gitignored). Anything you leave unset falls back to the default in `config.sh`:
 | `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `16GiB` / `40GiB` | VM resource limits. |
 | `NODE_DEFAULT` / `NVM_VERSION` | `24.16.0` / `v0.40.1` | nvm's default Node and the nvm release. |
 | `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` / `GRADLE_VERSION` | SDKMAN latest / `21` / latest / latest | SDKMAN tool versions. |
+| `APT_PACKAGES` | `git-filter-repo ripgrep python3… vim btop` | Dev apt packages (an essential core is always installed on top). |
 | `NEXUS_MAVEN_URL` | *(empty)* | Optional Maven/Gradle mirror (see below). |
 | `REGISTRY_MIRROR` | *(empty)* | Optional Docker registry pull-through mirror. |
 
@@ -299,7 +300,8 @@ can't disable it on its own.
   A determined attacker could attempt DNS tunneling — acceptable here given the VM
   isolation, but worth knowing.
 - **System packages**: the `vibe` user has no sudo by design. Install OS packages
-  by adding them to `guest/provision.sh` and re-running, not from inside a session.
+  by adding them to `APT_PACKAGES` in `vibevm.conf` (or editing `guest/provision.sh`)
+  and re-running `./create-vm.sh`, not from inside a session.
 - **Rootful Docker weakens egress control**: the `docker` group is root-equivalent
   in the VM, and container traffic bypasses the allowlist. Rely on the VM boundary
   (not the allowlist) against Docker misuse — see the Docker section.
