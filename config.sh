@@ -21,7 +21,7 @@ fi
 : "${VM_NAME:=vibevm}"
 : "${VM_IMAGE:=images:ubuntu/26.04}"
 : "${VM_CPU:=8}"
-: "${VM_MEM:=32GiB}"
+: "${VM_MEM:=16GiB}"
 : "${VM_DISK:=40GiB}"
 
 # Tool version pins (forwarded into provisioning by create-vm.sh). Empty values

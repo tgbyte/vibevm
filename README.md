@@ -67,7 +67,7 @@ gitignored). Anything you leave unset falls back to the default in `config.sh`:
 | --- | --- | --- |
 | `VM_NAME` | `vibevm` | incus instance name (all the host scripts target it). |
 | `VM_IMAGE` | `images:ubuntu/26.04` | Base image. |
-| `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `32GiB` / `40GiB` | VM resource limits. |
+| `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `16GiB` / `40GiB` | VM resource limits. |
 | `NODE_DEFAULT` / `NVM_VERSION` | `24.16.0` / `v0.40.1` | nvm's default Node and the nvm release. |
 | `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` / `GRADLE_VERSION` | SDKMAN latest / `21` / latest / latest | SDKMAN tool versions. |
 | `NEXUS_MAVEN_URL` | *(empty)* | Optional Maven/Gradle mirror (see below). |
