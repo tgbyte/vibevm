@@ -4,9 +4,13 @@
 #
 #   cp vibevm.conf.example vibevm.conf && $EDITOR vibevm.conf
 #
-# Applied at build time by ./create-vm.sh (resources/versions/mirrors) and at
-# launch by ./vibe (VM name). Re-run ./create-vm.sh --rebuild after changing
-# anything the VM is provisioned with.
+# Apply after changing:
+#   - resources (VM_CPU/VM_MEM/VM_DISK) — set at VM-launch time:
+#       ./create-vm.sh --rebuild
+#       (or, no rebuild:  incus config set vibevm limits.memory=16GiB && incus restart vibevm)
+#   - provisioning knobs (NODE_DEFAULT, JAVA_*, mirrors) — re-provisions, no rebuild:
+#       ./create-vm.sh
+#   - VM_NAME — read by ./vibe at launch; takes effect on the next ./create-vm.sh.
 
 # ── VM identity + resources ──────────────────────────────────────────────────
 # VM_NAME=vibevm
