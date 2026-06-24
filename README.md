@@ -155,6 +155,10 @@ see [DESIGN.md](DESIGN.md#developer-runtimes--the-jvm-proxy).
   `vibevm.conf`, not from inside a session.
 - **Don't reuse credentials**: use a scoped, low-privilege `ANTHROPIC_API_KEY`,
   and don't mount host SSH keys or cloud creds into `~/workspace`.
+- **No formal audit**: the isolation is best-effort and has **not** had a
+  third-party security audit or hardening review — evaluate it for your own risk
+  tolerance. Security review and fixes are very welcome
+  ([CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md)).
 
 ## How it works
 

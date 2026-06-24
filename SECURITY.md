@@ -3,6 +3,16 @@
 vibevm is a sandbox: its job is to contain Claude Code running with the approval
 prompt disabled. Reports that show the containment failing are taken seriously.
 
+## No formal audit
+
+vibevm's isolation is a **best-effort, defense-in-depth design by its
+maintainers — it has not undergone a formal third-party security audit or a
+professional hardening review.** It is provided as-is (see the
+[LICENSE](LICENSE)); evaluate whether its guarantees fit your own risk tolerance
+before trusting it with anything sensitive, and keep real host credentials out of
+the guest. Security review, hardening, and fixes are exactly the kind of
+contribution we welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Reporting a vulnerability
 
 **Please do not open a public issue for a security vulnerability.** Instead, either:
