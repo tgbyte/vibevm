@@ -36,7 +36,7 @@ fi
 # Base apt packages installed in the VM (space-separated dev tooling). An
 # essential core (ca-certificates curl git nftables jq) is always installed by
 # provision.sh regardless of this list, so trimming it can't break the VM.
-: "${APT_PACKAGES:=git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop}"
+: "${APT_PACKAGES:=git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop zsh}"
 
 # Optional mirrors. Empty = use public sources directly (Maven Central + Gradle
 # Plugin Portal for the JVM, upstream registries for Docker). Set these to a

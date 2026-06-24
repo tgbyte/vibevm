@@ -116,7 +116,7 @@ Anything unset falls back to the default in `config.sh`:
 | `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `16GiB` / `40GiB` | VM resource limits. |
 | `NODE_DEFAULT` / `NVM_VERSION` | `24.16.0` / `v0.40.1` | nvm's default Node and the nvm release. |
 | `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` / `GRADLE_VERSION` | SDKMAN latest / `21` / latest / latest | SDKMAN tool versions. |
-| `APT_PACKAGES` | `git-filter-repo ripgrep python3… vim btop` | Dev apt packages (an essential core is always installed too). |
+| `APT_PACKAGES` | `git-filter-repo ripgrep python3… vim btop zsh` | Dev apt packages (an essential core is always installed too). |
 | `NEXUS_MAVEN_URL` / `REGISTRY_MIRROR` | *(empty)* | Optional Maven/Gradle + Docker mirrors; empty = public sources. |
 
 Resource limits apply on `./create-vm.sh --rebuild`; provisioning knobs (versions,

@@ -12,7 +12,7 @@ HOST_GID="${HOST_GID:-1000}"
 # create-vm.sh). The essential core below is always installed regardless; this
 # list is the conveniences on top — extend or trim it. Keep in sync with the
 # default in config.sh.
-APT_PACKAGES="${APT_PACKAGES:-git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop}"
+APT_PACKAGES="${APT_PACKAGES:-git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop zsh}"
 
 echo "== Disabling IPv6 (so the IPv4 egress allowlist is total) =="
 cat >/etc/sysctl.d/99-disable-ipv6.conf <<'EOF'
