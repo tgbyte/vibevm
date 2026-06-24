@@ -159,6 +159,11 @@ The build, the network policy, the persistence mechanics, the threat model, and
 the design rationale behind each trade-off are documented in
 **[DESIGN.md](DESIGN.md)**.
 
+## Contributing
+
+Issues and pull requests are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)**
+for development setup, conventions, and how to report security issues.
+
 ## License
 
 [Apache 2.0](LICENSE) © 2026 TG Byte Software GmbH
