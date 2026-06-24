@@ -25,9 +25,9 @@ useful context.
 
 vibevm's whole job is containment, so please treat sandbox-escape-class bugs
 specially. If you find a way to **break out of the VM, defeat the egress
-allowlist, or exfiltrate data past it**, report it privately to
-`security@tgbyte.de` rather than opening a public issue, so it can be fixed before
-disclosure.
+allowlist, or exfiltrate data past it**, report it privately (see
+[SECURITY.md](SECURITY.md)) rather than opening a public issue, so it can be fixed
+before disclosure.
 
 ## Development setup
 
