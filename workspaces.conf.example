@@ -4,12 +4,17 @@
 #
 #   /abs/host/path          ->  ~/workspace/<basename>
 #   name=/abs/host/path     ->  ~/workspace/<name>
+#   ?…                      ->  optional: skipped quietly if the host path is
+#                               absent (instead of warning) — for paths that
+#                               aren't on every machine.
 #   ~ is expanded; blank lines and #comments are ignored.
 #
 # Examples:
 # /home/you/dev/my-api
 # frontend=/home/you/dev/customer-portal
 # ~/code/experiments
+# ?work=/home/you/work/internal-only      # only mounted where it exists
+# ?/home/you/dev/sometimes-here
 #
 # (Alternatively, just drop or clone projects into ./workspace/<name>/ —
 #  every subdirectory there is mounted automatically.)

@@ -114,6 +114,9 @@ if [ "$proj" = "." ]; then
     while IFS= read -r raw; do
       line="${raw%%#*}"; line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
       [ -z "$line" ] && continue
+      # Strip the optional marker (see mount-workspaces.sh); a missing path is
+      # handled by consider() either way.
+      case "$line" in '?'*) line="${line#\?}"; line="${line#"${line%%[![:space:]]*}"}" ;; esac
       if [[ "$line" == *=* ]]; then consider "${line%%=*}" "${line#*=}"
       else consider "$(basename "$line")" "$line"; fi
     done < "$HERE/workspaces.conf"

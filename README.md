@@ -95,7 +95,9 @@ virtiofs, each at `/home/vibe/workspace/<name>`. Two ways, combinable:
 - **Drop-in:** put or `git clone` projects into `./workspace/<name>/` — every
   subdirectory is mounted automatically.
 - **External paths:** list host dirs in `./workspaces.conf` (copy the `.example`);
-  `/abs/path` or `name=/abs/path`, one per line.
+  `/abs/path` or `name=/abs/path`, one per line. Prefix a line with `?` to mark it
+  **optional** — it's skipped quietly when the host path doesn't exist, instead of
+  warning (handy for paths that aren't present on every machine).
 
 Apply changes any time with `./vibe mounts`.
 

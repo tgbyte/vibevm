@@ -21,8 +21,15 @@ devname() { printf 'ws-%s' "$(printf '%s' "$1" | tr -c 'A-Za-z0-9_-' '-')"; }
 
 declare -A WANT=()   # name -> absolute host source path
 add_want() {
-  local name="$1" path="${2/#\~/$HOME}"
-  if [ ! -d "$path" ]; then echo "  ! skip '$name': not a directory: $path" >&2; return; fi
+  local name="$1" path="${2/#\~/$HOME}" optional="${3:-0}"
+  if [ ! -d "$path" ]; then
+    if [ "$optional" = 1 ]; then
+      echo "  · optional '$name' not present on host — skipping: $path" >&2
+    else
+      echo "  ! skip '$name': not a directory: $path" >&2
+    fi
+    return
+  fi
   WANT["$name"]="$(cd "$path" && pwd)"
 }
 
@@ -38,8 +45,12 @@ if [ -f "$HERE/workspaces.conf" ]; then
     line="${raw%%#*}"
     line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
     [ -z "$line" ] && continue
-    if [[ "$line" == *=* ]]; then add_want "${line%%=*}" "${line#*=}"
-    else add_want "$(basename "$line")" "$line"; fi
+    # A leading '?' marks the entry optional: if the host path is absent it's
+    # skipped quietly instead of warned about (for paths not on every machine).
+    opt=0
+    case "$line" in '?'*) opt=1; line="${line#\?}"; line="${line#"${line%%[![:space:]]*}"}" ;; esac
+    if [[ "$line" == *=* ]]; then add_want "${line%%=*}" "${line#*=}" "$opt"
+    else add_want "$(basename "$line")" "$line" "$opt"; fi
   done < "$HERE/workspaces.conf"
 fi
 
