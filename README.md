@@ -76,43 +76,46 @@ Then run `bootstrap.sh` and re-login so the `incus-admin` group applies.
 cp secrets.env.example secrets.env && $EDITOR secrets.env   # optional: scoped API key
 cp vibevm.conf.example vibevm.conf  && $EDITOR vibevm.conf   # optional: tune VM/versions/mirrors
 ./create-vm.sh          # build + provision the VM (a few minutes)
-./vibe                  # vibe-code in auto mode
+vibe                  # vibe-code in auto mode
 ```
 
 The two `cp` steps are optional — vibevm runs unmodified with sensible defaults.
 Put the projects you want to work on under `~/workspace` (see below).
 
+The examples call `vibe` directly — symlink it onto your `PATH` once
+(`ln -s "$PWD/vibe" ~/.local/bin/vibe`), or run it as `./vibe` from the repo.
+
 ## Everyday use
 
 ```sh
-./vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
-./vibe .                # PROJECT = the ~/workspace mount for the host dir you're in
-./vibe shell [PROJECT]  # login shell in the VM
-./vibe mounts           # (re)mount project dirs after editing workspaces.conf
-./vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
-./vibe statusline       # re-sync your host Claude status line into the VM
-./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
-./vibe stop             # pause the VM
-./vibe restore          # roll back to the 'clean' snapshot (./vibe restore <snap> for another)
+vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
+vibe .                # PROJECT = the ~/workspace mount for the host dir you're in
+vibe shell [PROJECT]  # login shell in the VM
+vibe mounts           # (re)mount project dirs after editing workspaces.conf
+vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
+vibe statusline       # re-sync your host Claude status line into the VM
+vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
+vibe stop             # pause the VM
+vibe restore          # roll back to the 'clean' snapshot (vibe restore <snap> for another)
 
 ./create-vm.sh --rebuild              # delete + recreate (host-backed state preserved)
 ```
 
-`./vibe` starts Claude in `~/workspace` (it sees every mounted project), or
-`./vibe <name>` to start directly inside `~/workspace/<name>`.
+`vibe` starts Claude in `~/workspace` (it sees every mounted project), or
+`vibe <name>` to start directly inside `~/workspace/<name>`.
 
-**`./vibe .`** is the handy shortcut: it picks the project for the host directory
+**`vibe .`** is the handy shortcut: it picks the project for the host directory
 you're currently in. It maps your `$PWD` to its `~/workspace` mount — resolving any
 `workspaces.conf` alias (`name=/abs/path`), and a subdirectory maps to the same
 path inside the mount (so running it from `~/dev/my-api/src` lands Claude in
 `~/workspace/my-api/src`). If `$PWD` isn't a mounted source, it falls back to the
-basename. So from any project checkout on the host you just run `./vibe .` without
+basename. So from any project checkout on the host you just run `vibe .` without
 remembering the mount name.
 
-Arguments after the project pass through to Claude — e.g. `./vibe . --resume`
-(resume picker for this project) or `./vibe . -c` (continue the latest session).
+Arguments after the project pass through to Claude — e.g. `vibe . --resume`
+(resume picker for this project) or `vibe . -c` (continue the latest session).
 
-**Persistence:** a rebuild wipes the VM disk, but `./vibe persist` backs
+**Persistence:** a rebuild wipes the VM disk, but `vibe persist` backs
 `~/.claude` (history, sessions, memory, login) with a host folder so it survives.
 `./create-vm.sh --rebuild` captures it for you before deleting. Details in
 [DESIGN.md](DESIGN.md#persistence-across-rebuilds).
@@ -144,7 +147,7 @@ virtiofs, each at `/home/vibe/workspace/<name>`. Two ways, combinable:
   **optional** — it's skipped quietly when the host path doesn't exist, instead of
   warning (handy for paths that aren't present on every machine).
 
-Apply changes any time with `./vibe mounts`.
+Apply changes any time with `vibe mounts`.
 
 **Git pushes happen from the host**, not the VM — the VM deliberately holds no git
 credentials and SSH is blocked. The agent commits inside the VM (attributed to
@@ -181,13 +184,13 @@ incus exec vibevm -- bash /usr/local/bin/harden.sh   # reinstall list + restart 
 Denied requests show as `403 Filtered` / `CONNECT tunnel failed`. (Replace
 `vibevm` with your `VM_NAME` if changed.)
 
-**Toggling the firewall.** `./vibe firewall off` opens egress (handy when you
+**Toggling the firewall.** `vibe firewall off` opens egress (handy when you
 knowingly need broad access); `on` re-enforces. The choice persists across
 reboots, and only the host operator can flip it — the `vibe` agent can't.
 
 **Custom API endpoint.** To point Claude at a gateway instead of
 `api.anthropic.com`, set `ANTHROPIC_BASE_URL` (and an auth token) in `secrets.env`;
-`./vibe` forwards it and auto-allows that host for direct egress — no firewall
+`vibe` forwards it and auto-allows that host for direct egress — no firewall
 edits needed.
 
 ## Preinstalled tooling

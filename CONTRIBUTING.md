@@ -17,7 +17,7 @@ Open a GitHub issue for bugs and feature requests. For a bug, please include:
 - the exact command you ran and the relevant output/logs,
 - what you expected versus what happened.
 
-For anything network/firewall-related, `./vibe firewall status`,
+For anything network/firewall-related, `vibe firewall status`,
 `incus exec <vm> -- nft list ruleset`, and the tinyproxy log are usually the most
 useful context.
 

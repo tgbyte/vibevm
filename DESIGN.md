@@ -68,7 +68,7 @@ re-run `create-vm.sh`, done.
 | `bootstrap.sh` | One-time host setup (starts the incus daemon, adds you to the group, minimal init). Needs sudo. |
 | `create-vm.sh` | Launches + provisions the VM. Idempotent; `--rebuild` deletes and recreates. |
 | `config.sh` | Shared config loader: bakes defaults, overlaid by a gitignored `vibevm.conf`. Sourced by every host script. |
-| `vibe` | Launcher: `./vibe` (Claude auto mode), `./vibe shell`, and the `mounts`/`statusline`/`persist`/`firewall` subcommands. |
+| `vibe` | Launcher: `vibe` (Claude auto mode), `vibe shell`, and the `mounts`/`statusline`/`persist`/`firewall` subcommands. |
 | `mount-workspaces.sh` | Mounts host project dirs into the VM under `~/workspace` (live virtiofs). |
 | `persist-claude.sh` | Backs `~/.claude` with host `./claude-home` so it survives rebuilds. |
 | `sync-statusline.sh` | Installs the Claude status line into the VM. |
@@ -168,7 +168,7 @@ The mode is saved in `/etc/vibe/firewall` and re-applied at boot by
 the nftables lockdown; `off` removes the table and stops tinyproxy filtering
 (traffic still routes through it but passes). The unprivileged `vibe` user cannot
 run it (nftables needs root), so a runaway or injected agent **cannot disable the
-allowlist on its own** — only the host operator can, via `./vibe firewall`.
+allowlist on its own** — only the host operator can, via `vibe firewall`.
 
 ### Residual network notes
 
@@ -199,7 +199,7 @@ then attaches the mount. `create-vm.sh` re-attaches it on every rebuild, and
 `--rebuild` captures `~/.claude` to the host *before* deleting.
 
 Claude's main config is `~/.claude.json`, which lives in `$HOME` **outside**
-`~/.claude`. So `./vibe` sets `CLAUDE_CONFIG_DIR=/home/vibe/.claude`, relocating
+`~/.claude`. So `vibe` sets `CLAUDE_CONFIG_DIR=/home/vibe/.claude`, relocating
 both config and state under the persisted mount — that is what keeps you logged in
 across rebuilds (the OAuth credential / account info live in `.claude.json` /
 `.credentials.json`). Project-level memory (`CLAUDE.md`, `memory/` inside a

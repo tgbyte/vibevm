@@ -56,7 +56,7 @@ don't report them as vulnerabilities:
 - **DNS can be a covert channel.** Queries to the VM's own resolvers are permitted
   (needed for name resolution), so a determined attacker could attempt DNS
   tunneling.
-- **The operator can open egress.** `./vibe firewall off` intentionally disables
+- **The operator can open egress.** `vibe firewall off` intentionally disables
   the allowlist; only the host operator can do this, and it's a supported action.
 - **Out of scope:** anything requiring host root, a malicious host operator,
   physical access, or credentials the operator deliberately placed in the guest.
