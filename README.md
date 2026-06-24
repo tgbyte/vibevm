@@ -174,3 +174,11 @@ for development setup, conventions, and how to report security issues.
 ## License
 
 [Apache 2.0](LICENSE) © 2026 TG Byte Software GmbH
+
+## Trademarks
+
+vibevm is an independent project and is **not affiliated with, endorsed by, or
+sponsored by Anthropic**. "Claude" and "Claude Code" are trademarks of
+Anthropic, PBC. All other product names, logos, and brands are the property of
+their respective owners and are used here for identification and descriptive
+purposes only.
