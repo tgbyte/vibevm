@@ -91,6 +91,9 @@ re-run `create-vm.sh`, done.
 (extra mounts), `workspace/` (drop-in projects), `claude-home/` (persisted
 `~/.claude`).
 
+**Optional:** `completions/` holds bash and zsh tab-completion for the `vibe`
+launcher (subcommands, `firewall` modes, and project names).
+
 ## Provisioning flow
 
 `create-vm.sh`:

@@ -1,0 +1,76 @@
+#compdef vibe ./vibe
+# zsh completion for vibevm's `vibe` launcher.
+#
+# Install: place this file (named _vibe) on your $fpath before compinit, e.g.
+#     mkdir -p ~/.zfunc && cp /path/to/vibevm/completions/_vibe ~/.zfunc/
+#     # in ~/.zshrc, before `compinit`:
+#     fpath=(~/.zfunc $fpath)
+#     autoload -Uz compinit && compinit
+#
+# Completes subcommands, `firewall` modes, and your mounted project names
+# (from ./workspace/* and ./workspaces.conf). Works for both `vibe` and `./vibe`.
+
+_vibe_repo_dir() {
+    local exe="$1" resolved
+    case "$exe" in
+        */*) ;;                                        # a path was typed (./vibe, /abs/vibe)
+        *)   exe="$(command -v "$exe" 2>/dev/null)" || return 0 ;;
+    esac
+    resolved="$(readlink -f "$exe" 2>/dev/null)"
+    [[ -z "$resolved" ]] && resolved="$exe"
+    print -r -- "${resolved:h}"
+}
+
+_vibe_projects() {
+    setopt localoptions extendedglob
+    local repo="$1" d line
+    [[ -n "$repo" ]] || return 0
+    if [[ -d "$repo/workspace" ]]; then
+        for d in "$repo"/workspace/*/(N); do print -r -- "${${d%/}:t}"; done
+    fi
+    if [[ -f "$repo/workspaces.conf" ]]; then
+        while IFS= read -r line; do
+            line="${line%%\#*}"                                  # strip comments
+            line="${line##[[:space:]]##}"; line="${line%%[[:space:]]##}"  # trim ws
+            [[ -z "$line" ]] && continue
+            if [[ "$line" == *=* ]]; then print -r -- "${line%%=*}"; else print -r -- "${line:t}"; fi
+        done < "$repo/workspaces.conf"
+    fi
+}
+
+_vibe() {
+    local repo; repo="$(_vibe_repo_dir "${words[1]}")"
+    local -a subcmds projlist
+    subcmds=(
+        'claude:Run Claude in a project (default)'
+        'shell:Login shell in the VM'
+        'mounts:Re-mount workspace directories'
+        'statusline:Re-sync the status line into the VM'
+        'persist:Back ~/.claude on the host (survives rebuilds)'
+        'firewall:Toggle the egress allowlist'
+        'help:Show usage'
+    )
+
+    if (( CURRENT == 2 )); then
+        projlist=(${(f)"$(_vibe_projects "$repo")"})
+        _describe -t commands 'vibe command' subcmds
+        _describe -t projects 'project' projlist
+        _values 'current dir' '.'
+        return
+    fi
+
+    case "${words[2]}" in
+        firewall)
+            (( CURRENT == 3 )) && _values 'firewall mode' on off status
+            ;;
+        claude|shell)
+            if (( CURRENT == 3 )); then
+                projlist=(${(f)"$(_vibe_projects "$repo")"})
+                _describe -t projects 'project' projlist
+                _values 'current dir' '.'
+            fi
+            ;;
+    esac
+}
+
+_vibe "$@"

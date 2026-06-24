@@ -72,6 +72,21 @@ project pass through to Claude — e.g. `./vibe . --resume`.
 `./create-vm.sh --rebuild` captures it for you before deleting. Details in
 [DESIGN.md](DESIGN.md#persistence-across-rebuilds).
 
+### Shell completions
+
+Optional tab-completion for `vibe` — subcommands, `firewall` modes, and your
+mounted project names — lives in `completions/`. It works whether you run `vibe`
+(on `PATH`) or `./vibe` from the repo.
+
+```sh
+# bash — source it from ~/.bashrc:
+source /path/to/vibevm/completions/vibe.bash
+
+# zsh — put _vibe on your fpath before compinit:
+mkdir -p ~/.zfunc && cp /path/to/vibevm/completions/_vibe ~/.zfunc/
+#   then in ~/.zshrc, before `compinit`:  fpath=(~/.zfunc $fpath)
+```
+
 ## Projects & git
 
 **Mounting (`~/workspace`).** Host directories are shared into the VM live via
