@@ -3,6 +3,17 @@
 # start a NEW shell (or restart Claude Code) so the new group membership applies.
 set -euo pipefail
 
+# incus must already be installed (this script only starts/inits the daemon).
+if ! command -v incus >/dev/null 2>&1; then
+  cat >&2 <<'MSG'
+incus is not installed. Install it on the host first (see README "Prerequisites"):
+  Ubuntu (24.04+):  sudo apt install incus qemu-system
+  Arch Linux:       sudo pacman -S incus qemu-base edk2-ovmf dnsmasq
+Then re-run ./bootstrap.sh.
+MSG
+  exit 1
+fi
+
 echo "== Starting + enabling the incus daemon =="
 sudo systemctl enable --now incus.socket incus.service
 

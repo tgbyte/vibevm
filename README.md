@@ -33,9 +33,43 @@ that matters: treat the guest as untrusted and keep real host credentials out of
 it. The full threat model and the mechanics of each layer are in
 **[DESIGN.md](DESIGN.md)**.
 
-## Quick start
+## Prerequisites
 
-Requires a Linux host with incus and KVM virtualization.
+The sandbox is a **KVM virtual machine** managed by
+[incus](https://linuxcontainers.org/incus/), so the **host** needs incus with VM
+support and hardware virtualization installed *before* `bootstrap.sh` —
+`bootstrap.sh` only starts and initializes the incus daemon, it does not install
+incus.
+
+Any host: an x86-64 CPU with hardware virtualization (Intel VT-x / AMD-V) enabled
+in the BIOS/UEFI. Check that KVM is available:
+
+```sh
+[ -e /dev/kvm ] && echo "KVM ok" || echo "no /dev/kvm — enable virtualization in BIOS/UEFI"
+```
+
+**Ubuntu (24.04 / 26.04):**
+
+```sh
+sudo apt install incus qemu-system      # incus + VM (QEMU) support
+```
+
+The native package tracks the Incus 6.0 LTS branch; for the latest 7.x use the
+[Zabbly repo](https://github.com/zabbly/incus). The `incus-admin` group ships with
+the package.
+
+**Arch Linux:**
+
+```sh
+sudo pacman -S incus qemu-base edk2-ovmf dnsmasq   # incus + VM firmware + bridge DNS
+```
+
+(Arch ships no Secure Boot-signed VM firmware, so guests must run with
+`security.secureboot=false` — set it on the instance if a VM fails to boot.)
+
+Then run `bootstrap.sh` and re-login so the `incus-admin` group applies.
+
+## Quick start
 
 ```sh
 ./bootstrap.sh          # one time; sudo. Then start a NEW shell / restart Claude Code.
