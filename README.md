@@ -86,6 +86,7 @@ Put the projects you want to work on under `~/workspace` (see below).
 
 ```sh
 ./vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
+./vibe .                # PROJECT = the ~/workspace mount for the host dir you're in
 ./vibe shell [PROJECT]  # login shell in the VM
 ./vibe mounts           # (re)mount project dirs after editing workspaces.conf
 ./vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
@@ -98,8 +99,18 @@ incus stop vibevm                     # pause
 ```
 
 `./vibe` starts Claude in `~/workspace` (it sees every mounted project), or
-`./vibe <name>` to start directly inside `~/workspace/<name>`. Arguments after the
-project pass through to Claude — e.g. `./vibe . --resume`.
+`./vibe <name>` to start directly inside `~/workspace/<name>`.
+
+**`./vibe .`** is the handy shortcut: it picks the project for the host directory
+you're currently in. It maps your `$PWD` to its `~/workspace` mount — resolving any
+`workspaces.conf` alias (`name=/abs/path`), and a subdirectory maps to the same
+path inside the mount (so running it from `~/dev/my-api/src` lands Claude in
+`~/workspace/my-api/src`). If `$PWD` isn't a mounted source, it falls back to the
+basename. So from any project checkout on the host you just run `./vibe .` without
+remembering the mount name.
+
+Arguments after the project pass through to Claude — e.g. `./vibe . --resume`
+(resume picker for this project) or `./vibe . -c` (continue the latest session).
 
 **Persistence:** a rebuild wipes the VM disk, but `./vibe persist` backs
 `~/.claude` (history, sessions, memory, login) with a host folder so it survives.
