@@ -158,3 +158,7 @@ see [DESIGN.md](DESIGN.md#developer-runtimes--the-jvm-proxy).
 The build, the network policy, the persistence mechanics, the threat model, and
 the design rationale behind each trade-off are documented in
 **[DESIGN.md](DESIGN.md)**.
+
+## License
+
+[Apache 2.0](LICENSE) © 2026 TG Byte Software GmbH
