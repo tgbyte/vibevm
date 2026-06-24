@@ -26,9 +26,12 @@ contains the fallout with three layers:
 | **Egress allowlist** | An in-VM domain-allowlisting proxy (`tinyproxy`); `nftables` forces all web egress through it (default-drop otherwise). |
 | **Least privilege** | Claude runs as the unprivileged `vibe` user with **no sudo**. IPv6 is off so the v4 allowlist is total. Only a *scoped* API key is injected, at launch. |
 
-The VM is the boundary that matters — treat the guest as untrusted and keep real
-host credentials out of it. The full threat model and the mechanics of each layer
-are in **[DESIGN.md](DESIGN.md)**.
+vibevm deliberately uses a **real VM (its own kernel), not a container**, and is
+built from a **handful of auditable shell scripts rather than a stack of custom
+images** — see [why](DESIGN.md#why-a-vm-not-containers). The VM is the boundary
+that matters: treat the guest as untrusted and keep real host credentials out of
+it. The full threat model and the mechanics of each layer are in
+**[DESIGN.md](DESIGN.md)**.
 
 ## Quick start
 

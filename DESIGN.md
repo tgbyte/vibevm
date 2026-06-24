@@ -34,6 +34,31 @@ snapshotted. The allowlist and least-privilege layers reduce what a single bad
 run can do *before* you notice and reset, but you should treat the guest as
 untrusted: keep real host credentials out of it.
 
+## Why a VM, not containers
+
+Two convictions shaped vibevm.
+
+**Strong isolation through a real VM, not containers.** The agent runs with the
+approval prompt disabled, so the isolation boundary has to hold against a
+fully-capable process that may be acting on malicious instructions. Containers
+share the host kernel — a single kernel-level escape, or a misconfigured
+namespace or capability, reaches the host directly. A KVM virtual machine runs
+its **own kernel** behind a hardware-virtualization boundary, so escaping it is a
+far higher bar and the host kernel is never directly exposed to guest activity.
+For a sandbox whose entire purpose is to contain untrusted execution, that
+stronger boundary is worth the modest cost in RAM and start-up time. (The VM is
+just as disposable as a container — snapshot, restore, delete — but the *kernel
+separation* is the part that earns its keep here.)
+
+**A compact, auditable codebase — not a stack of images.** vibevm is a handful of
+shell scripts and config files driving stock incus and stock Ubuntu. There is no
+custom Docker image to build, publish, version, and trust; no compose stack or
+orchestration layer; nothing pulled from a registry you would have to vet. The
+provisioning is plain `apt`, `curl`, and `nft` you can read line by line — which
+matters for a security tool, where "I can see exactly what it does" is itself a
+feature. It also keeps the project portable and easy to modify: change a script,
+re-run `create-vm.sh`, done.
+
 ## Repository layout
 
 **Host scripts** (run on your machine, orchestrate incus):
