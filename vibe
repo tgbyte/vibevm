@@ -47,6 +47,25 @@ if ! incus info "$VM" >/dev/null 2>&1; then
   echo "VM '$VM' not found. Run ./create-vm.sh first." >&2
   exit 1
 fi
+
+# Subcommands that act on the VM itself — handled here so they don't trigger the
+# auto-start/-wait below (you don't want `stop` to first boot the VM).
+case "${1:-}" in
+  stop)
+    # Pause the VM.
+    exec incus stop "$VM"
+    ;;
+  restore)
+    # Roll back to a snapshot (default: the baseline 'clean'). Stop first if the
+    # VM is running — a stateless snapshot can't be restored onto a live VM.
+    snap="${2:-clean}"
+    if [ "$(incus info "$VM" | awk '/Status/{print $2}')" = RUNNING ]; then
+      incus stop "$VM" --timeout 60
+    fi
+    exec incus snapshot restore "$VM" "$snap"
+    ;;
+esac
+
 [ "$(incus info "$VM" | awk '/Status/{print $2}')" = RUNNING ] || incus start "$VM"
 until incus exec "$VM" -- true 2>/dev/null; do sleep 1; done
 
@@ -75,9 +94,10 @@ case "${1:-claude}" in
     exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
     ;;
   -h|--help|help)
-    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status>]"
+    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status> | stop | restore [SNAPSHOT]]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
     echo "  '.' resolves \$PWD to its ~/workspace mount (handles workspaces.conf aliases)."
+    echo "  stop pauses the VM; restore rolls back to a snapshot (default 'clean')."
     echo "  Args after PROJECT pass through to claude / the shell, e.g. ./vibe . --resume."
     exit 0
     ;;

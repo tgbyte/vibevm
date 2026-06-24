@@ -48,6 +48,8 @@ _vibe() {
         'statusline:Re-sync the status line into the VM'
         'persist:Back ~/.claude on the host (survives rebuilds)'
         'firewall:Toggle the egress allowlist'
+        'stop:Pause the VM'
+        'restore:Roll back to a snapshot (default clean)'
         'help:Show usage'
     )
 

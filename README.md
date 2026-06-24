@@ -92,9 +92,9 @@ Put the projects you want to work on under `~/workspace` (see below).
 ./vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
 ./vibe statusline       # re-sync your host Claude status line into the VM
 ./vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
+./vibe stop             # pause the VM
+./vibe restore          # roll back to the 'clean' snapshot (./vibe restore <snap> for another)
 
-incus snapshot restore vibevm clean   # roll back a messed-up VM
-incus stop vibevm                     # pause
 ./create-vm.sh --rebuild              # delete + recreate (host-backed state preserved)
 ```
 

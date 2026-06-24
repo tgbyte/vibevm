@@ -41,7 +41,7 @@ _vibe() {
     local cur cword
     cur="${COMP_WORDS[COMP_CWORD]}"
     cword=$COMP_CWORD
-    local subcmds="claude shell mounts statusline persist firewall help"
+    local subcmds="claude shell mounts statusline persist firewall stop restore help"
     local repo; repo="$(_vibe_repo_dir "${COMP_WORDS[0]}")"
 
     # `vibe firewall <on|off|status>`
