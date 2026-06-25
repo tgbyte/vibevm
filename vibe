@@ -35,9 +35,10 @@ commands:
   stop                      pause the VM
   restore [SNAPSHOT]        roll back to a snapshot (default 'clean')
 
-PROJECT is a directory under ~/workspace; '.' resolves $PWD to its mount
-(handling workspaces.conf aliases). ARGS after PROJECT/. pass through to
-Claude or the shell, e.g. vibe . --resume.
+PROJECT is a mounted project — a ./workspace/<name> dir or a workspaces.conf
+entry (it lives at ~/workspace/<PROJECT> in the VM); '.' picks the project for
+your current host directory. ARGS after PROJECT/. pass through to Claude or
+the shell, e.g. vibe . --resume.
 EOF
     exit 0
     ;;
