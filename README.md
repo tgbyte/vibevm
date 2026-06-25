@@ -49,12 +49,12 @@ Ubuntu's package is Incus 6.0 LTS; for 7.x use the
 
 ```sh
 ./install.sh            # one time (sudo): incus + `vibe` on PATH + shell completions
-./create-vm.sh          # build + provision the VM (a few minutes)
+vibe create             # build + provision the VM (a few minutes)
 vibe                    # vibe-code in auto mode, in ~/workspace
 ```
 
 `install.sh` puts `vibe` on your `PATH` and installs bash/zsh completion, so open a
-new shell (and re-login, for the `incus-admin` group) before `create-vm.sh`.
+new shell (and re-login, for the `incus-admin` group) before `vibe create`.
 Optionally first: `cp secrets.env.example secrets.env` (a scoped API key) and
 `cp vibevm.conf.example vibevm.conf` (tune the build) — vibevm runs with sensible
 defaults without them.
@@ -71,7 +71,7 @@ vibe statusline       # re-sync your host status line into the VM
 vibe firewall on|off|status   # toggle / inspect the egress allowlist
 vibe stop             # pause the VM
 vibe restore [SNAP]   # roll back to a snapshot (default 'clean')
-./create-vm.sh --rebuild      # delete + recreate (host-backed state preserved)
+vibe create [--rebuild]   # build the VM; --rebuild deletes + recreates (state preserved)
 ```
 
 Arguments after the project pass through to Claude — e.g. `vibe . --resume` or
@@ -104,8 +104,8 @@ keys fall back to `config.sh`:
 | `APT_PACKAGES` | dev tooling (+ an always-on essential core) | extra apt packages |
 | `NEXUS_MAVEN_URL` / `REGISTRY_MIRROR` | empty (public sources) | optional Maven / Docker mirrors |
 
-Resource limits need `./create-vm.sh --rebuild`; version/package/mirror changes
-apply on a plain `./create-vm.sh`.
+Resource limits need `vibe create --rebuild`; version/package/mirror changes
+apply on a plain `vibe create`.
 
 **Egress allowlist** — the domains the VM may reach are in `./allowlist` (copy from
 `allowlist.example`, one host regex per line). Edit it, then run **`vibe config`** to

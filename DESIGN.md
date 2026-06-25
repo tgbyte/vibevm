@@ -66,7 +66,7 @@ re-run `create-vm.sh`, done.
 | File | Role |
 | --- | --- |
 | `install.sh` | One-time host setup: incus daemon, `incus-admin` group, minimal init, plus `vibe` on PATH and shell completions. Needs sudo. |
-| `create-vm.sh` | Launches + provisions the VM. Idempotent; `--rebuild` deletes and recreates. |
+| `create-vm.sh` | Launches + provisions the VM (run via `vibe create`). Idempotent; `--rebuild` deletes and recreates. |
 | `config.sh` | Shared config loader: bakes defaults, overlaid by a gitignored `vibevm.conf`. Sourced by every host script. |
 | `vibe` | Launcher: `vibe` (Claude auto mode), `vibe shell`, and the `mounts`/`statusline`/`persist`/`firewall` subcommands. |
 | `mount-workspaces.sh` | Mounts host project dirs into the VM under `~/workspace` (live virtiofs). |

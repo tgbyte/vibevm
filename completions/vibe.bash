@@ -41,12 +41,18 @@ _vibe() {
     local cur cword
     cur="${COMP_WORDS[COMP_CWORD]}"
     cword=$COMP_CWORD
-    local subcmds="claude shell config statusline persist firewall stop restore help"
+    local subcmds="claude shell create config statusline persist firewall stop restore help"
     local repo; repo="$(_vibe_repo_dir "${COMP_WORDS[0]}")"
 
     # `vibe firewall <on|off|status>`
     if [ "$cword" -ge 2 ] && [ "${COMP_WORDS[1]}" = firewall ]; then
         [ "$cword" -eq 2 ] && COMPREPLY=( $(compgen -W "on off status" -- "$cur") )
+        return
+    fi
+
+    # `vibe create [--rebuild] [--yes]`
+    if [ "$cword" -ge 2 ] && [ "${COMP_WORDS[1]}" = create ]; then
+        COMPREPLY=( $(compgen -W "--rebuild --yes" -- "$cur") )
         return
     fi
 

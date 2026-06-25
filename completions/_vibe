@@ -44,6 +44,7 @@ _vibe() {
     subcmds=(
         'claude:Run Claude in a project (default)'
         'shell:Login shell in the VM'
+        'create:Build/provision the VM (--rebuild to recreate)'
         'config:Re-apply host config (mounts + allowlist) to the VM'
         'statusline:Re-sync the status line into the VM'
         'persist:Back ~/.claude on the host (survives rebuilds)'
@@ -64,6 +65,9 @@ _vibe() {
     case "${words[2]}" in
         firewall)
             (( CURRENT == 3 )) && _values 'firewall mode' on off status
+            ;;
+        create)
+            compadd -- --rebuild --yes
             ;;
         claude|shell)
             if (( CURRENT == 3 )); then

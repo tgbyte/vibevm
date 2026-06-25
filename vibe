@@ -16,6 +16,11 @@ HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 . "$HERE/config.sh"
 VM="$VM_NAME"
 
+# `create` builds/provisions the VM — the one command that runs before the VM
+# exists, so it's handled here, ahead of the existence check and session setup
+# below. Args pass through to create-vm.sh (e.g. `vibe create --rebuild`).
+if [ "${1:-}" = create ]; then shift; exec "$HERE/create-vm.sh" "$@"; fi
+
 ENVFLAGS=()
 # Claude keeps its config (~/.claude.json) and state under CLAUDE_CONFIG_DIR.
 # Point it at the persisted ~/.claude mount so login + config survive rebuilds
@@ -44,7 +49,7 @@ if [ -n "$gname" ] && [ -n "$gmail" ]; then
 fi
 
 if ! incus info "$VM" >/dev/null 2>&1; then
-  echo "VM '$VM' not found. Run ./create-vm.sh first." >&2
+  echo "VM '$VM' not found. Run 'vibe create' first." >&2
   exit 1
 fi
 
@@ -102,9 +107,10 @@ case "${1:-claude}" in
     exit 0
     ;;
   -h|--help|help)
-    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | config | statusline | persist | firewall <on|off|status> | stop | restore [SNAPSHOT]]"
+    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | create [--rebuild] | config | statusline | persist | firewall <on|off|status> | stop | restore [SNAPSHOT]]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
     echo "  '.' resolves \$PWD to its ~/workspace mount (handles workspaces.conf aliases)."
+    echo "  create builds/provisions the VM (create --rebuild deletes + recreates it)."
     echo "  config re-applies host config (mounts + allowlist) to the running VM."
     echo "  stop pauses the VM; restore rolls back to a snapshot (default 'clean')."
     echo "  Args after PROJECT pass through to claude / the shell, e.g. ./vibe . --resume."

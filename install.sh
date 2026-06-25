@@ -6,7 +6,7 @@
 # incus itself must already be installed — see the README "Prerequisites".
 #
 # After it runs, open a NEW shell (and re-login so the incus-admin group
-# applies), then: ./create-vm.sh  &&  vibe
+# applies), then: vibe create  &&  vibe
 set -euo pipefail
 HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
 BINDIR="${VIBE_BINDIR:-$HOME/.local/bin}"
@@ -76,7 +76,7 @@ vibevm is installed.
 Next:
   1. Open a NEW shell (for the PATH + completions), and re-login if needed —
      the incus-admin group only applies to new sessions.
-  2. ./create-vm.sh        # build + provision the VM (a few minutes)
+  2. vibe create           # build + provision the VM (a few minutes)
   3. vibe                  # vibe-code in auto mode
 
 To undo: remove the "$MARK_BEGIN" … "$MARK_END" block from ~/.bashrc / ~/.zshrc
