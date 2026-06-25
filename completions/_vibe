@@ -45,6 +45,7 @@ _vibe() {
         'claude:Run Claude in a project (default)'
         'shell:Login shell in the VM'
         'mounts:Re-mount workspace directories'
+        'config:Re-apply host config (mounts + allowlist) to the VM'
         'statusline:Re-sync the status line into the VM'
         'persist:Back ~/.claude on the host (survives rebuilds)'
         'firewall:Toggle the egress allowlist'

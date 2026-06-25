@@ -65,6 +65,7 @@ vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
 vibe .                # the project for the host dir you're in (resolves the mount)
 vibe shell [PROJECT]  # login shell in the VM
 vibe mounts           # (re)mount projects after editing workspaces.conf
+vibe config           # apply host config (mounts + allowlist) to the running VM
 vibe persist          # back ~/.claude on the host so it survives rebuilds
 vibe statusline       # re-sync your host status line into the VM
 vibe firewall on|off|status   # toggle / inspect the egress allowlist
@@ -107,12 +108,8 @@ Resource limits need `./create-vm.sh --rebuild`; version/package/mirror changes
 apply on a plain `./create-vm.sh`.
 
 **Egress allowlist** — the domains the VM may reach are in `./allowlist` (copy from
-`allowlist.example`, one host regex per line). Edit it, then re-push:
-
-```sh
-incus file push allowlist vibevm/root/allowlist --mode 0644
-incus exec vibevm -- bash /usr/local/bin/harden.sh   # reinstall + restart tinyproxy
-```
+`allowlist.example`, one host regex per line). Edit it, then run **`vibe config`** to
+push it into the running VM and restart the proxy (no rebuild needed).
 
 `vibe firewall off` opens egress entirely (only the host operator can). For an LLM
 gateway, set `ANTHROPIC_BASE_URL` (+ token) in `secrets.env` — `vibe` auto-allows

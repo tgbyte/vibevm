@@ -93,10 +93,21 @@ case "${1:-claude}" in
     # Toggle the egress allowlist (root inside the VM; the agent can't).
     exec incus exec "$VM" -- /usr/local/sbin/vibe-firewall "${2:-status}"
     ;;
+  config)
+    # Re-apply host config to the running VM: workspace mounts + egress allowlist.
+    # (The status line is separate — see `vibe statusline`.)
+    "$HERE/mount-workspaces.sh"
+    [ -f "$HERE/allowlist" ] || cp "$HERE/allowlist.example" "$HERE/allowlist"
+    echo "== Updating egress allowlist =="
+    incus file push "$HERE/allowlist" "$VM/root/allowlist" --mode 0644
+    incus exec "$VM" -- bash /usr/local/bin/harden.sh
+    exit 0
+    ;;
   -h|--help|help)
-    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | statusline | persist | firewall <on|off|status> | stop | restore [SNAPSHOT]]"
+    echo "usage: $(basename "$0") [PROJECT | . | claude [PROJECT] | shell [PROJECT] | mounts | config | statusline | persist | firewall <on|off|status> | stop | restore [SNAPSHOT]]"
     echo "  PROJECT is a directory under ~/workspace; Claude (or the shell) starts there."
     echo "  '.' resolves \$PWD to its ~/workspace mount (handles workspaces.conf aliases)."
+    echo "  config re-applies host config (mounts + allowlist) to the running VM."
     echo "  stop pauses the VM; restore rolls back to a snapshot (default 'clean')."
     echo "  Args after PROJECT pass through to claude / the shell, e.g. ./vibe . --resume."
     exit 0
