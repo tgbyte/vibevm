@@ -64,7 +64,6 @@ with sensible defaults without them. `vibe` is the launcher; symlink it onto you
 vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
 vibe .                # the project for the host dir you're in (resolves the mount)
 vibe shell [PROJECT]  # login shell in the VM
-vibe mounts           # (re)mount projects after editing workspaces.conf
 vibe config           # apply host config (mounts + allowlist) to the running VM
 vibe persist          # back ~/.claude on the host so it survives rebuilds
 vibe statusline       # re-sync your host status line into the VM
@@ -85,7 +84,7 @@ Host directories are shared into the VM live (virtiofs) under `~/workspace`:
 - **Drop-in:** put or `git clone` projects into `./workspace/<name>/`.
 - **External paths:** list them in `./workspaces.conf` — `/abs/path` or
   `name=/abs/path`, one per line; prefix with `?` to skip quietly if the path is
-  absent. Apply with `vibe mounts`.
+  absent. Apply with `vibe config`.
 
 **Pushing happens from the host** — the VM holds no git credentials and SSH is
 blocked. The agent commits inside the VM (as your host git identity); because the

@@ -128,5 +128,5 @@ Next:
      or get a plain shell in the VM:               ./vibe shell
 
 Mount projects under ~/workspace: drop/clone them into ./workspace/<name>/ or list
-host paths in ./workspaces.conf, then run ./vibe mounts (see workspaces.conf.example).
+host paths in ./workspaces.conf, then run ./vibe config (see workspaces.conf.example).
 EOF
