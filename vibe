@@ -96,7 +96,9 @@ case "${1:-claude}" in
     [ -f "$HERE/allowlist" ] || cp "$HERE/allowlist.example" "$HERE/allowlist"
     echo "== Updating egress allowlist =="
     incus file push "$HERE/allowlist" "$VM/root/allowlist" --mode 0644
-    incus exec "$VM" -- bash /usr/local/bin/harden.sh
+    # Apply it without re-provisioning: install the list and let vibe-firewall
+    # reload tinyproxy (respecting the current on/off mode). No apt, no re-harden.
+    incus exec "$VM" -- bash -c 'install -m 0644 /root/allowlist /etc/tinyproxy/allowlist && /usr/local/sbin/vibe-firewall apply'
     exit 0
     ;;
   -h|--help|help)

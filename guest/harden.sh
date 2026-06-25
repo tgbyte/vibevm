@@ -7,7 +7,7 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 echo "== Installing tinyproxy =="
-apt-get install -y --no-install-recommends tinyproxy
+dpkg -s tinyproxy >/dev/null 2>&1 || apt-get install -y --no-install-recommends tinyproxy
 
 echo "== Domain allowlist =="
 install -d /etc/tinyproxy
@@ -16,9 +16,8 @@ install -d /etc/tinyproxy
 # allowlist never means editing this script. If it's absent (harden.sh run
 # standalone on a VM that never received one), keep any existing list; failing
 # that, write a minimal bootstrap list sufficient to reach the API + core repos.
-# To change the allowlist reproducibly: edit ./allowlist on the host and re-run
-# ./create-vm.sh (it re-pushes). For a quick live tweak: edit this file in the VM
-# and `systemctl restart tinyproxy`.
+# To change the allowlist: edit ./allowlist on the host and run `vibe config`
+# (pushes it + reloads tinyproxy, no rebuild); create-vm.sh also re-pushes it.
 if [ -f /root/allowlist ]; then
   install -m 0644 /root/allowlist /etc/tinyproxy/allowlist
 elif [ ! -s /etc/tinyproxy/allowlist ]; then
