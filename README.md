@@ -3,17 +3,17 @@
 </p>
 
 <p align="center">
-  A throwaway KVM virtual machine where you can run Claude Code in auto mode
-  without putting your host, your credentials, or the network at risk.
+  A throwaway KVM virtual machine for running Claude Code in auto mode without
+  putting your host, your credentials, or the network at risk.
 </p>
 
 ---
 
 **vibevm** is an [incus](https://linuxcontainers.org/incus/) KVM virtual machine
-(Ubuntu 26.04 LTS) tuned for running `claude --dangerously-skip-permissions`
-(auto / "YOLO" mode). You edit projects on the host with your normal tools; Claude
-works on the same files inside the VM, where a destructive command, a leaked
-secret, or a prompt-injection payload can't reach beyond a disposable guest.
+(Ubuntu 26.04 LTS) for running `claude --dangerously-skip-permissions` (auto mode)
+safely. You edit projects on the host with your normal tools; Claude works on the
+same files inside a disposable VM, where a destructive command, a leaked secret,
+or a prompt-injection payload can't reach beyond the guest.
 
 ## Why a VM
 
@@ -22,219 +22,134 @@ contains the fallout with three layers:
 
 | Layer | How |
 | --- | --- |
-| **Blast radius** | A full KVM VM (separate kernel), disposable. Trash it and restore the `clean` snapshot. |
-| **Egress allowlist** | An in-VM domain-allowlisting proxy (`tinyproxy`); `nftables` forces all web egress through it (default-drop otherwise). |
-| **Least privilege** | Claude runs as the unprivileged `vibe` user with **no sudo**. IPv6 is off so the v4 allowlist is total. Only a *scoped* API key is injected, at launch. |
+| **Blast radius** | A full KVM VM (separate kernel), disposable — trash it and restore the `clean` snapshot. |
+| **Egress allowlist** | An in-VM domain-allowlisting proxy (`tinyproxy`); `nftables` default-drops everything else. |
+| **Least privilege** | Claude runs as the unprivileged `vibe` user, no sudo; only a scoped API key is injected, at launch. |
 
-vibevm deliberately uses a **real VM (its own kernel), not a container**, and is
-built from a **handful of auditable shell scripts rather than a stack of custom
-images** — see [why](DESIGN.md#why-a-vm-not-containers). The VM is the boundary
-that matters: treat the guest as untrusted and keep real host credentials out of
-it. The full threat model and the mechanics of each layer are in
-**[DESIGN.md](DESIGN.md)**.
+The VM is the boundary that matters — treat the guest as untrusted and keep host
+credentials out of it. (Why a real VM and not a container, and why it's just shell
+scripts: [DESIGN.md](DESIGN.md#why-a-vm-not-containers).)
 
 ## Prerequisites
 
-The sandbox is a **KVM virtual machine** managed by
-[incus](https://linuxcontainers.org/incus/), so the **host** needs incus with VM
-support and hardware virtualization installed *before* `bootstrap.sh` —
-`bootstrap.sh` only starts and initializes the incus daemon, it does not install
-incus.
-
-Any host: an x86-64 CPU with hardware virtualization (Intel VT-x / AMD-V) enabled
-in the BIOS/UEFI. Check that KVM is available:
+A Linux host with **incus + VM support** and hardware virtualization — `bootstrap.sh`
+only starts the incus daemon, it doesn't install incus. Check KVM with
+`[ -e /dev/kvm ]`, then install incus:
 
 ```sh
-[ -e /dev/kvm ] && echo "KVM ok" || echo "no /dev/kvm — enable virtualization in BIOS/UEFI"
+# Ubuntu 24.04+:   sudo apt install incus qemu-system
+# Arch Linux:      sudo pacman -S incus qemu-base edk2-ovmf dnsmasq
 ```
 
-**Ubuntu (24.04 / 26.04):**
-
-```sh
-sudo apt install incus qemu-system      # incus + VM (QEMU) support
-```
-
-The native package tracks the Incus 6.0 LTS branch; for the latest 7.x use the
-[Zabbly repo](https://github.com/zabbly/incus). The `incus-admin` group ships with
-the package.
-
-**Arch Linux:**
-
-```sh
-sudo pacman -S incus qemu-base edk2-ovmf dnsmasq   # incus + VM firmware + bridge DNS
-```
-
-(Arch ships no Secure Boot-signed VM firmware, so guests must run with
-`security.secureboot=false` — set it on the instance if a VM fails to boot.)
-
-Then run `bootstrap.sh` and re-login so the `incus-admin` group applies.
+Ubuntu's package is Incus 6.0 LTS; for 7.x use the
+[Zabbly repo](https://github.com/zabbly/incus). On Arch, VMs need Secure Boot off
+(`security.secureboot=false`) — it ships no signed firmware.
 
 ## Quick start
 
 ```sh
-./bootstrap.sh          # one time; sudo. Then start a NEW shell / restart Claude Code.
-cp secrets.env.example secrets.env && $EDITOR secrets.env   # optional: scoped API key
-cp vibevm.conf.example vibevm.conf  && $EDITOR vibevm.conf   # optional: tune VM/versions/mirrors
+./bootstrap.sh          # one time (sudo); then re-login so the incus-admin group applies
 ./create-vm.sh          # build + provision the VM (a few minutes)
-vibe                  # vibe-code in auto mode
+vibe                    # vibe-code in auto mode, in ~/workspace
 ```
 
-The two `cp` steps are optional — vibevm runs unmodified with sensible defaults.
-Put the projects you want to work on under `~/workspace` (see below).
-
-The examples call `vibe` directly — symlink it onto your `PATH` once
-(`ln -s "$PWD/vibe" ~/.local/bin/vibe`), or run it as `./vibe` from the repo.
+Optionally, before `create-vm.sh`: `cp secrets.env.example secrets.env` (a scoped
+API key) and `cp vibevm.conf.example vibevm.conf` (tune the build) — vibevm runs
+with sensible defaults without them. `vibe` is the launcher; symlink it onto your
+`PATH` (`ln -s "$PWD/vibe" ~/.local/bin/vibe`) or run it as `./vibe` from the repo.
 
 ## Everyday use
 
 ```sh
 vibe [PROJECT]        # Claude in auto mode, in ~/workspace[/PROJECT]
-vibe .                # PROJECT = the ~/workspace mount for the host dir you're in
+vibe .                # the project for the host dir you're in (resolves the mount)
 vibe shell [PROJECT]  # login shell in the VM
-vibe mounts           # (re)mount project dirs after editing workspaces.conf
-vibe persist          # back ~/.claude with host ./claude-home (survives rebuilds)
-vibe statusline       # re-sync your host Claude status line into the VM
-vibe firewall status  # show egress mode; `off` opens egress, `on` re-enforces
+vibe mounts           # (re)mount projects after editing workspaces.conf
+vibe persist          # back ~/.claude on the host so it survives rebuilds
+vibe statusline       # re-sync your host status line into the VM
+vibe firewall on|off|status   # toggle / inspect the egress allowlist
 vibe stop             # pause the VM
-vibe restore          # roll back to the 'clean' snapshot (vibe restore <snap> for another)
-
-./create-vm.sh --rebuild              # delete + recreate (host-backed state preserved)
+vibe restore [SNAP]   # roll back to a snapshot (default 'clean')
+./create-vm.sh --rebuild      # delete + recreate (host-backed state preserved)
 ```
 
-`vibe` starts Claude in `~/workspace` (it sees every mounted project), or
-`vibe <name>` to start directly inside `~/workspace/<name>`.
-
-**`vibe .`** is the handy shortcut: it picks the project for the host directory
-you're currently in. It maps your `$PWD` to its `~/workspace` mount — resolving any
-`workspaces.conf` alias (`name=/abs/path`), and a subdirectory maps to the same
-path inside the mount (so running it from `~/dev/my-api/src` lands Claude in
-`~/workspace/my-api/src`). If `$PWD` isn't a mounted source, it falls back to the
-basename. So from any project checkout on the host you just run `vibe .` without
-remembering the mount name.
-
-Arguments after the project pass through to Claude — e.g. `vibe . --resume`
-(resume picker for this project) or `vibe . -c` (continue the latest session).
-
-**Persistence:** a rebuild wipes the VM disk, but `vibe persist` backs
-`~/.claude` (history, sessions, memory, login) with a host folder so it survives.
-`./create-vm.sh --rebuild` captures it for you before deleting. Details in
-[DESIGN.md](DESIGN.md#persistence-across-rebuilds).
-
-### Shell completions
-
-Optional tab-completion for `vibe` — subcommands, `firewall` modes, and your
-mounted project names — lives in `completions/`. It works whether you run `vibe`
-(on `PATH`) or `./vibe` from the repo.
-
-```sh
-# bash — source it from ~/.bashrc:
-source /path/to/vibevm/completions/vibe.bash
-
-# zsh — put _vibe on your fpath before compinit:
-mkdir -p ~/.zfunc && cp /path/to/vibevm/completions/_vibe ~/.zfunc/
-#   then in ~/.zshrc, before `compinit`:  fpath=(~/.zfunc $fpath)
-```
+Arguments after the project pass through to Claude — e.g. `vibe . --resume` or
+`vibe . -c`. Tab completion for bash/zsh lives in `completions/` (install steps in
+each file's header).
 
 ## Projects & git
 
-**Mounting (`~/workspace`).** Host directories are shared into the VM live via
-virtiofs, each at `/home/vibe/workspace/<name>`. Two ways, combinable:
+Host directories are shared into the VM live (virtiofs) under `~/workspace`:
 
-- **Drop-in:** put or `git clone` projects into `./workspace/<name>/` — every
-  subdirectory is mounted automatically.
-- **External paths:** list host dirs in `./workspaces.conf` (copy the `.example`);
-  `/abs/path` or `name=/abs/path`, one per line. Prefix a line with `?` to mark it
-  **optional** — it's skipped quietly when the host path doesn't exist, instead of
-  warning (handy for paths that aren't present on every machine).
+- **Drop-in:** put or `git clone` projects into `./workspace/<name>/`.
+- **External paths:** list them in `./workspaces.conf` — `/abs/path` or
+  `name=/abs/path`, one per line; prefix with `?` to skip quietly if the path is
+  absent. Apply with `vibe mounts`.
 
-Apply changes any time with `vibe mounts`.
-
-**Git pushes happen from the host**, not the VM — the VM deliberately holds no git
-credentials and SSH is blocked. The agent commits inside the VM (attributed to
-your host git identity, carried in at launch); because the repo is virtiofs-shared
-those commits are immediately on the host, where you `git push` with your normal
-credentials.
+**Pushing happens from the host** — the VM holds no git credentials and SSH is
+blocked. The agent commits inside the VM (as your host git identity); because the
+repo is shared, those commits are immediately on the host, where you `git push`.
 
 ## Configuration
 
-Host settings live in `vibevm.conf` (copy from `vibevm.conf.example`, gitignored).
-Anything unset falls back to the default in `config.sh`:
+Settings live in `vibevm.conf` (copy from `vibevm.conf.example`, gitignored); unset
+keys fall back to `config.sh`:
 
 | Setting | Default | Controls |
 | --- | --- | --- |
-| `VM_NAME` / `VM_IMAGE` | `vibevm` / `images:ubuntu/26.04` | incus instance name and base image. |
-| `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `16GiB` / `40GiB` | VM resource limits. |
-| `NODE_DEFAULT` / `NVM_VERSION` | `24.16.0` / `v0.40.1` | nvm's default Node and the nvm release. |
-| `JAVA_VERSION` / `JAVA_EXTRA_MAJORS` / `MAVEN_VERSION` / `GRADLE_VERSION` | SDKMAN latest / `21` / latest / latest | SDKMAN tool versions. |
-| `APT_PACKAGES` | `git-filter-repo ripgrep python3… vim btop zsh` | Dev apt packages (an essential core is always installed too). |
-| `NEXUS_MAVEN_URL` / `REGISTRY_MIRROR` | *(empty)* | Optional Maven/Gradle + Docker mirrors; empty = public sources. |
+| `VM_NAME` / `VM_IMAGE` | `vibevm` / `images:ubuntu/26.04` | instance name, base image |
+| `VM_CPU` / `VM_MEM` / `VM_DISK` | `8` / `16GiB` / `40GiB` | resource limits |
+| `NODE_DEFAULT`, `JAVA_VERSION`, `MAVEN_VERSION`, `GRADLE_VERSION`, … | see the example | tool versions |
+| `APT_PACKAGES` | dev tooling (+ an always-on essential core) | extra apt packages |
+| `NEXUS_MAVEN_URL` / `REGISTRY_MIRROR` | empty (public sources) | optional Maven / Docker mirrors |
 
-Resource limits apply on `./create-vm.sh --rebuild`; provisioning knobs (versions,
-packages, mirrors) apply on a plain `./create-vm.sh` (re-provisions, no rebuild).
+Resource limits need `./create-vm.sh --rebuild`; version/package/mirror changes
+apply on a plain `./create-vm.sh`.
 
-**Egress allowlist.** The domains the VM may reach live in `./allowlist` (copy
-from `allowlist.example`; one host regex per line). Edit it and re-apply:
+**Egress allowlist** — the domains the VM may reach are in `./allowlist` (copy from
+`allowlist.example`, one host regex per line). Edit it, then re-push:
 
 ```sh
-$EDITOR allowlist
 incus file push allowlist vibevm/root/allowlist --mode 0644
-incus exec vibevm -- bash /usr/local/bin/harden.sh   # reinstall list + restart tinyproxy
+incus exec vibevm -- bash /usr/local/bin/harden.sh   # reinstall + restart tinyproxy
 ```
 
-Denied requests show as `403 Filtered` / `CONNECT tunnel failed`. (Replace
-`vibevm` with your `VM_NAME` if changed.)
-
-**Toggling the firewall.** `vibe firewall off` opens egress (handy when you
-knowingly need broad access); `on` re-enforces. The choice persists across
-reboots, and only the host operator can flip it — the `vibe` agent can't.
-
-**Custom API endpoint.** To point Claude at a gateway instead of
-`api.anthropic.com`, set `ANTHROPIC_BASE_URL` (and an auth token) in `secrets.env`;
-`vibe` forwards it and auto-allows that host for direct egress — no firewall
-edits needed.
+`vibe firewall off` opens egress entirely (only the host operator can). For an LLM
+gateway, set `ANTHROPIC_BASE_URL` (+ token) in `secrets.env` — `vibe` auto-allows
+that host.
 
 ## Preinstalled tooling
 
-Beyond the base tooling (git, ripgrep, build-essential, Python 3), `devtools.sh`
+**The default toolset is opinionated toward Java and frontend/web development.** On
+top of a base of git, ripgrep, build-essential, Python 3 and zsh, `devtools.sh`
 installs:
 
-| Runtime | How | Notes |
-| --- | --- | --- |
-| **Node** | `nvm` (per-user) | default Node 24 (`NODE_DEFAULT`); `nvm install/use <ver>` to switch. |
-| **Java** | `SDKMAN` (per-user) | latest Temurin + JDK 21; `JAVA_EXTRA_MAJORS` adds more. |
-| **Maven + Gradle** | `SDKMAN` (per-user) | resolve from public Maven Central + Gradle Plugin Portal out of the box; optional Nexus mirror via `NEXUS_MAVEN_URL`. |
-| **Chrome + Lighthouse** | system Chrome + `lighthouse` | `CHROME_PATH` preset; works headless for the `vibe` user. |
-| **Docker** | rootful (`docker` + compose + buildx) | works directly in a session; image pulls go through the allowlist. |
+| Runtime | Notes |
+| --- | --- |
+| **Java** | SDKMAN — latest Temurin + JDK 21, Maven & Gradle (public repos, optional Nexus mirror) |
+| **Node** | nvm — default Node 24; `nvm install/use <ver>` to switch |
+| **Chrome + Lighthouse** | headless system Chrome, for web/perf audits |
+| **Docker** | rootful (engine + compose + buildx) |
 
-Java builds and rootful Docker both have important details and trade-offs —
-see [DESIGN.md](DESIGN.md#developer-runtimes--the-jvm-proxy).
+Different stack? Trim or swap it via `APT_PACKAGES` and the version knobs in
+`vibevm.conf`, or edit `guest/devtools.sh`. Java builds and rootful Docker have
+trade-offs — see [DESIGN.md](DESIGN.md#developer-runtimes--the-jvm-proxy).
 
 ## Trade-offs to know
 
-- **HTTP/HTTPS only** through the proxy (80/443) — use `https://` git remotes, not
-  SSH.
-- **Rootful Docker weakens egress control**: the `docker` group is
-  root-equivalent in the VM and container traffic bypasses the allowlist. The VM
-  (not the allowlist) is the boundary against Docker misuse.
-- **No sudo for `vibe`** by design — install OS packages via `APT_PACKAGES` in
-  `vibevm.conf`, not from inside a session.
-- **Don't reuse credentials**: use a scoped, low-privilege `ANTHROPIC_API_KEY`,
-  and don't mount host SSH keys or cloud creds into `~/workspace`.
-- **No formal audit**: the isolation is best-effort and has **not** had a
-  third-party security audit or hardening review — evaluate it for your own risk
-  tolerance. Security review and fixes are very welcome
-  ([CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md)).
+- **HTTP/HTTPS only** through the proxy — use `https://` git remotes, not SSH.
+- **Rootful Docker** is root-equivalent in the VM and its container traffic bypasses
+  the allowlist; the VM, not the allowlist, is the boundary against Docker misuse.
+- **No formal audit** — the isolation is best-effort, not third-party reviewed;
+  judge it for your own risk. Review and fixes welcome ([SECURITY.md](SECURITY.md)).
+- **Don't reuse credentials** — use a scoped API key, and keep host SSH/cloud creds
+  out of `~/workspace`.
 
-## How it works
+## Documentation & contributing
 
-The build, the network policy, the persistence mechanics, the threat model, and
-the design rationale behind each trade-off are documented in
-**[DESIGN.md](DESIGN.md)**.
-
-## Contributing
-
-Issues and pull requests are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)**
-for development setup, conventions, and how to report security issues.
+- How it works, threat model, design rationale: **[DESIGN.md](DESIGN.md)**
+- Contributing & dev setup: **[CONTRIBUTING.md](CONTRIBUTING.md)**
+- Reporting vulnerabilities: **[SECURITY.md](SECURITY.md)**
 
 ## License
 
@@ -242,8 +157,6 @@ for development setup, conventions, and how to report security issues.
 
 ## Trademarks
 
-vibevm is an independent project and is **not affiliated with, endorsed by, or
-sponsored by Anthropic**. "Claude" and "Claude Code" are trademarks of
-Anthropic, PBC. All other product names, logos, and brands are the property of
-their respective owners and are used here for identification and descriptive
-purposes only.
+vibevm is an independent project, **not affiliated with or endorsed by Anthropic**.
+"Claude" and "Claude Code" are trademarks of Anthropic, PBC, used here only
+descriptively.
