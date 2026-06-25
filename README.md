@@ -32,7 +32,7 @@ scripts: [DESIGN.md](DESIGN.md#why-a-vm-not-containers).)
 
 ## Prerequisites
 
-A Linux host with **incus + VM support** and hardware virtualization — `bootstrap.sh`
+A Linux host with **incus + VM support** and hardware virtualization — `install.sh`
 only starts the incus daemon, it doesn't install incus. Check KVM with
 `[ -e /dev/kvm ]`, then install incus:
 
@@ -48,15 +48,16 @@ Ubuntu's package is Incus 6.0 LTS; for 7.x use the
 ## Quick start
 
 ```sh
-./bootstrap.sh          # one time (sudo); then re-login so the incus-admin group applies
+./install.sh            # one time (sudo): incus + `vibe` on PATH + shell completions
 ./create-vm.sh          # build + provision the VM (a few minutes)
 vibe                    # vibe-code in auto mode, in ~/workspace
 ```
 
-Optionally, before `create-vm.sh`: `cp secrets.env.example secrets.env` (a scoped
-API key) and `cp vibevm.conf.example vibevm.conf` (tune the build) — vibevm runs
-with sensible defaults without them. `vibe` is the launcher; symlink it onto your
-`PATH` (`ln -s "$PWD/vibe" ~/.local/bin/vibe`) or run it as `./vibe` from the repo.
+`install.sh` puts `vibe` on your `PATH` and installs bash/zsh completion, so open a
+new shell (and re-login, for the `incus-admin` group) before `create-vm.sh`.
+Optionally first: `cp secrets.env.example secrets.env` (a scoped API key) and
+`cp vibevm.conf.example vibevm.conf` (tune the build) — vibevm runs with sensible
+defaults without them.
 
 ## Everyday use
 
@@ -74,8 +75,8 @@ vibe restore [SNAP]   # roll back to a snapshot (default 'clean')
 ```
 
 Arguments after the project pass through to Claude — e.g. `vibe . --resume` or
-`vibe . -c`. Tab completion for bash/zsh lives in `completions/` (install steps in
-each file's header).
+`vibe . -c`. Bash/zsh tab completion is installed by `install.sh` (sources live in
+`completions/` if you'd rather wire it up by hand).
 
 ## Projects & git
 

@@ -35,7 +35,7 @@ You need the same thing as running vibevm: a Linux host with **incus** and **KVM
 virtualization. Then:
 
 ```sh
-./bootstrap.sh                  # one-time host setup (sudo)
+./install.sh                    # one-time host setup (sudo)
 ./create-vm.sh                  # build the VM
 # …make your changes…
 ./create-vm.sh                  # re-provision in place (idempotent)

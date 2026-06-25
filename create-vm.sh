@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Creates + provisions the vibevm sandbox. Run as your normal user AFTER
-# bootstrap.sh and a re-login (so you're in the incus-admin group). Idempotent;
+# install.sh and a re-login (so you're in the incus-admin group). Idempotent;
 # pass --rebuild to delete the existing VM and recreate it from scratch.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -28,7 +28,7 @@ for arg in "$@"; do
 done
 
 if ! incus info >/dev/null 2>&1; then
-  echo "Can't reach the incus daemon. Run ./bootstrap.sh first, then start a new shell." >&2
+  echo "Can't reach the incus daemon. Run ./install.sh first, then start a new shell." >&2
   exit 1
 fi
 

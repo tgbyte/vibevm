@@ -65,7 +65,7 @@ re-run `create-vm.sh`, done.
 
 | File | Role |
 | --- | --- |
-| `bootstrap.sh` | One-time host setup (starts the incus daemon, adds you to the group, minimal init). Needs sudo. |
+| `install.sh` | One-time host setup: incus daemon, `incus-admin` group, minimal init, plus `vibe` on PATH and shell completions. Needs sudo. |
 | `create-vm.sh` | Launches + provisions the VM. Idempotent; `--rebuild` deletes and recreates. |
 | `config.sh` | Shared config loader: bakes defaults, overlaid by a gitignored `vibevm.conf`. Sourced by every host script. |
 | `vibe` | Launcher: `vibe` (Claude auto mode), `vibe shell`, and the `mounts`/`statusline`/`persist`/`firewall` subcommands. |
