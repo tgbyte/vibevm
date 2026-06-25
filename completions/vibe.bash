@@ -32,6 +32,7 @@ _vibe_projects() {
             line="${line%%#*}"
             line="${line#"${line%%[![:space:]]*}"}"; line="${line%"${line##*[![:space:]]}"}"
             [ -z "$line" ] && continue
+            case "$line" in '?'*) line="${line#\?}"; line="${line#"${line%%[![:space:]]*}"}" ;; esac
             if [[ "$line" == *=* ]]; then printf '%s\n' "${line%%=*}"; else basename "$line"; fi
         done < "$repo/workspaces.conf"
     fi

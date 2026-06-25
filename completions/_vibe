@@ -33,6 +33,7 @@ _vibe_projects() {
             line="${line%%\#*}"                                  # strip comments
             line="${line##[[:space:]]##}"; line="${line%%[[:space:]]##}"  # trim ws
             [[ -z "$line" ]] && continue
+            line="${line#\?}"; line="${line##[[:space:]]##}"    # drop optional '?' marker
             if [[ "$line" == *=* ]]; then print -r -- "${line%%=*}"; else print -r -- "${line:t}"; fi
         done < "$repo/workspaces.conf"
     fi
