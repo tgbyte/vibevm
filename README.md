@@ -48,6 +48,7 @@ Ubuntu's package is Incus 6.0 LTS; for 7.x use the
 ## Quick start
 
 ```sh
+git clone https://github.com/tgbyte/vibevm.git && cd vibevm
 ./install.sh            # one time (sudo): incus + `vibe` on PATH + shell completions
 vibe create             # build + provision the VM (a few minutes)
 vibe                    # vibe-code in auto mode, in ~/workspace
