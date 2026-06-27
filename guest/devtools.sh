@@ -99,6 +99,23 @@ chmod a+r /etc/apt/sources.list.d/opentofu.list
 apt-get update
 apt-get install -y tofu
 
+echo "== Helm 3 (official release binary from get.helm.sh) =="
+# Helm deprecated its apt/dnf package repos (baltocdn.com now returns an empty
+# placeholder), so install the supported way: the release tarball from
+# get.helm.sh, verified against its published sha256. get.helm.sh must be in
+# ./allowlist. Pin with HELM_VERSION (e.g. v3.16.3); unset = current stable.
+helm_arch="$(dpkg --print-architecture)"
+helm_ver="${HELM_VERSION:-$(curl -fsSL https://get.helm.sh/helm-latest-version)}"
+helm_tgz="helm-${helm_ver}-linux-${helm_arch}.tar.gz"
+helm_tmp="$(mktemp -d)"
+curl -fsSL "https://get.helm.sh/${helm_tgz}"            -o "$helm_tmp/$helm_tgz"
+curl -fsSL "https://get.helm.sh/${helm_tgz}.sha256sum"  -o "$helm_tmp/$helm_tgz.sha256sum"
+( cd "$helm_tmp" && sha256sum -c "$helm_tgz.sha256sum" )
+tar -xzf "$helm_tmp/$helm_tgz" -C "$helm_tmp"
+install -m 0755 "$helm_tmp/linux-${helm_arch}/helm" /usr/local/bin/helm
+rm -rf "$helm_tmp"
+helm version
+
 # The JVM ignores the http_proxy env vars the rest of the VM uses, so Maven and
 # Gradle are pointed at the egress proxy explicitly. By default they resolve from
 # the public repos (Maven Central + the Gradle Plugin Portal, both allowlisted);

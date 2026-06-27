@@ -39,13 +39,14 @@
 ^repo1\.maven\.org$
 (^|\.)gradle\.org$
 
-# ── Infra tooling (Terraform / OpenTofu / RKE2) ──────────────────────────────
+# ── Infra tooling (Terraform / OpenTofu / Helm / RKE2) ───────────────────────
 ^registry\.terraform\.io$
 ^search\.opentofu\.org$
 ^registry\.opentofu\.org$
 ^get\.opentofu\.org$
 ^packages\.opentofu\.org$
 ^d3fo0g5hm7lbuv\.cloudfront\.net$
+^get\.helm\.sh$
 ^docs\.rke2\.io$
 
 # ── Chrome (Lighthouse) ──────────────────────────────────────────────────────
