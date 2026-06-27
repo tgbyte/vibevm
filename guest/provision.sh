@@ -14,6 +14,29 @@ HOST_GID="${HOST_GID:-1000}"
 # default in config.sh.
 APT_PACKAGES="${APT_PACKAGES:-git-filter-repo ripgrep python3 python3-venv python3-pip python3-pil build-essential iproute2 dnsutils less vim nano btop zsh}"
 
+# Re-provision case: when the VM's egress firewall is already enforcing, this
+# script runs via `incus exec` (a NON-login shell), so it doesn't inherit the
+# proxy from /etc/profile.d/proxy.sh — raw curl/npm would then hit the default-drop
+# firewall and hang (apt is fine; it has its own 01proxy config). If tinyproxy is
+# already listening, route outbound HTTP(S) through it; every download host below
+# is on the allowlist. On a first build the proxy isn't up yet and the network is
+# still open, so this stays unset and we connect directly, as before.
+if (exec 3<>/dev/tcp/127.0.0.1/8888) 2>/dev/null; then
+  exec 3>&-
+  echo "== Egress proxy already up — routing provisioning downloads through it =="
+  export http_proxy=http://127.0.0.1:8888  https_proxy=http://127.0.0.1:8888
+  export HTTP_PROXY="$http_proxy"          HTTPS_PROXY="$https_proxy"
+  export no_proxy=localhost,127.0.0.1      NO_PROXY=localhost,127.0.0.1
+  # harden.sh installs the (possibly updated) allowlist only at the very end, but
+  # download steps below may need a host that was just added to ./allowlist. Refresh
+  # the live allowlist now (mirrors harden.sh) so the proxy honours those additions
+  # before the steps that depend on them run.
+  if [ -f /root/allowlist ]; then
+    install -m 0644 /root/allowlist /etc/tinyproxy/allowlist
+    systemctl reload tinyproxy 2>/dev/null || systemctl restart tinyproxy 2>/dev/null || true
+  fi
+fi
+
 echo "== Disabling IPv6 (so the IPv4 egress allowlist is total) =="
 cat >/etc/sysctl.d/99-disable-ipv6.conf <<'EOF'
 net.ipv6.conf.all.disable_ipv6 = 1
